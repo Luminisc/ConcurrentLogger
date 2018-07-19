@@ -23,6 +23,13 @@ namespace AvaloniaConcurrentDemo
 			_logQueue.Enqueue(text);
 	    }
 
+	    public void StopLogger()
+	    {
+		    _loggerEnabled = false;
+		    Task.WaitAll(_loggingTask);
+		    _loggingTask = null;
+	    }
+
 	    private void SetupLogger()
 	    {
 		    _loggerEnabled = true;

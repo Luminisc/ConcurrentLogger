@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
@@ -34,11 +35,14 @@ namespace AvaloniaConcurrentDemo
 				{
 					for (int i = 0; i < 1000; i++)
 					{
-						logger.PushMessage("Hey listen!");
+						logger.PushMessage($"Message here! Thread {t}, value {i}");
 					}
+					logger.PushMessage($"----------Thread {t}: Job done!");
 				})).ToArray();
 
 				Task.WaitAll(tasks);
+				logger.StopLogger();
+				logger = null;
 			}).Start();
 		}
 	}
