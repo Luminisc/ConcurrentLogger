@@ -14,7 +14,6 @@ namespace AvaloniaMVVM
         public static readonly string relativePathToRoot = @"..\..\..\..\";
         public static string picturePath = Path.Combine(relativePathToRoot, @"Pics\Data_Envi\samson_1.img");
         
-
         static void Main(string[] args)
         {
             Dataset dataset;
@@ -23,6 +22,8 @@ namespace AvaloniaMVVM
             Console.WriteLine($"Current folder: {Environment.CurrentDirectory}");
             Gdal.AllRegister();
             dataset = Gdal.Open(picturePath, Access.GA_ReadOnly);
+            Console.WriteLine($"Dataset loaded successfully.");
+            Console.WriteLine($"Dataset dimensions:\r\n\tWidth: {dataset.RasterXSize}\r\n\tHeight: {dataset.RasterYSize}\r\n\tBands: {dataset.RasterCount}");
             BuildAvaloniaApp().Start<MainWindow>(() => new MainWindowViewModel());
         }
 
@@ -32,12 +33,13 @@ namespace AvaloniaMVVM
                 .UseReactiveUI()
                 .LogToDebug();
 
-#if OS_LINUX
-		[DllImport(@"./CMakeLibrary.so", EntryPoint = "Add")]
-#endif
-#if OS_WINDOWS
-        [DllImport(@"./CMakeLibrary.dll", EntryPoint = "Add")]
-#endif
+        //#if OS_LINUX
+        //		[DllImport(@"./CMakeLibrary.so", EntryPoint = "Add")]
+        //#endif
+        //#if OS_WINDOWS
+        //      [DllImport(@"./CMakeLibrary.dll", EntryPoint = "Add")]
+        //#endif
+        [DllImport(@"./CMakeLibrary", EntryPoint = "Add")]
         public static extern double Add(double x, double y);
     }
 }
