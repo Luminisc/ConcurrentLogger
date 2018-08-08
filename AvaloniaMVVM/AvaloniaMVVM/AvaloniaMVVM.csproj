@@ -11,6 +11,9 @@
   <PropertyGroup Condition=" '$(OS)' == 'Unix' ">
     <DefineConstants>OS_LINUX</DefineConstants>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netcoreapp2.0|x64'">
+    <OutputPath>bin\Debug\</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <Folder Include="Models\" />
     <Compile Update="**\*.xaml.cs">
