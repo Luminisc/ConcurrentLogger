@@ -12,15 +12,15 @@ namespace AvaloniaMVVM
 {
     class Program
     {
-        public static readonly string relativePathToRoot = @"..\..\..\";
-        public static string picturePath = Path.Combine(relativePathToRoot, @"Pics\Data_Envi\samson_1.img");
+        public static readonly string relativePathToRoot = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location),@"../../../");
+        public static string picturePath = Path.Combine(relativePathToRoot, @"Pics/Data_Envi/samson_1.img");
         
         static void Main(string[] args)
         {
             //double x = Add(5.0, 17.0);
             //Console.WriteLine($"5 + 17 = {x}");
-            Console.WriteLine($"Current folder: {Environment.CurrentDirectory}");
-            Console.WriteLine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
+            Console.WriteLine($"Current folder: {relativePathToRoot}");
+            Console.WriteLine();
             Gdal.AllRegister();
             Dataset dataset = Gdal.Open(picturePath, Access.GA_ReadOnly);
             Console.WriteLine($"Dataset loaded successfully.");
