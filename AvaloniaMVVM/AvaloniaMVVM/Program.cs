@@ -6,6 +6,7 @@ using AvaloniaMVVM.Views;
 using System.Runtime.InteropServices;
 using OSGeo.GDAL;
 using System.IO;
+using System.Reflection;
 
 namespace AvaloniaMVVM
 {
@@ -16,9 +17,10 @@ namespace AvaloniaMVVM
         
         static void Main(string[] args)
         {
-            double x = Add(5.0, 17.0);
-            Console.WriteLine($"5 + 17 = {x}");
+            //double x = Add(5.0, 17.0);
+            //Console.WriteLine($"5 + 17 = {x}");
             Console.WriteLine($"Current folder: {Environment.CurrentDirectory}");
+            Console.WriteLine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
             Gdal.AllRegister();
             Dataset dataset = Gdal.Open(picturePath, Access.GA_ReadOnly);
             Console.WriteLine($"Dataset loaded successfully.");
@@ -32,13 +34,7 @@ namespace AvaloniaMVVM
                 .UseReactiveUI()
                 .LogToDebug();
 
-        //#if OS_LINUX
-        //		[DllImport(@"./CMakeLibrary.so", EntryPoint = "Add")]
-        //#endif
-        //#if OS_WINDOWS
-        //      [DllImport(@"./CMakeLibrary.dll", EntryPoint = "Add")]
-        //#endif
-        [DllImport(@"./CMakeLibrary", EntryPoint = "Add")]
-        public static extern double Add(double x, double y);
+        //[DllImport(@"./CMakeLibrary", EntryPoint = "Add")]
+        //public static extern double Add(double x, double y);
     }
 }
