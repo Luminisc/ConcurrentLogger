@@ -10,6 +10,9 @@ using System.IO;
 using System.Reflection;
 using Avalonia.Media.Imaging;
 using System.Diagnostics;
+using ILGPU;
+using ILGPU.Runtime.Cuda;
+using ILGPU.Runtime;
 
 namespace AvaloniaMVVM
 {
@@ -20,21 +23,10 @@ namespace AvaloniaMVVM
 
         static void Main(string[] args)
         {
-            //double x = Add(5.0, 17.0);
-            //Console.WriteLine($"5 + 17 = {x}");
             Console.WriteLine($"Current folder: {relativePathToRoot}");
             Console.WriteLine();
             Gdal.AllRegister();
-            //Dataset dataset = Gdal.Open(picturePath, Access.GA_ReadOnly);
-            //Console.WriteLine($"Dataset loaded successfully.");
-            //Console.WriteLine($"Dataset dimensions:\r\n\tWidth: {dataset.RasterXSize}\r\n\tHeight: {dataset.RasterYSize}\r\n\tBands: {dataset.RasterCount}");
-            //var band = dataset.GetRasterBand(1);
-            //var buffer = new short[dataset.RasterXSize * dataset.RasterYSize];
-            //band.ReadRaster(0, 0, dataset.RasterXSize, dataset.RasterYSize, buffer, dataset.RasterXSize, dataset.RasterYSize, 0, 0);
-            //var signature = new short[dataset.RasterCount];
-            //dataset.ReadRaster(0, 0, 1, 1, signature, 1, 1, dataset.RasterCount, Enumerable.Range(1, dataset.RasterCount).ToArray(), 0, 0, 0);
-            //Console.WriteLine($"Buffer: {string.Join(", ", buffer.Take(10))} ...");
-            //Console.WriteLine($"Signature: {string.Join(", ", signature.Take(10))} ...");
+
             BuildAvaloniaApp().Start<MainWindow>(() => GetModel());
         }
 
@@ -48,29 +40,33 @@ namespace AvaloniaMVVM
         {
             var vm = new MainWindowViewModel();
             Stopwatch st = new Stopwatch();
-
+            st.Start();
             Dataset dataset = Gdal.Open(picturePath, Access.GA_ReadOnly);
-            Console.WriteLine($"Dataset loaded successfully.");
+            st.Stop();
+            Console.WriteLine($"Dataset loaded successfully in {st.ElapsedMilliseconds} ms.");
             Console.WriteLine($"Dataset dimensions:\r\n\tWidth: {dataset.RasterXSize}\r\n\tHeight: {dataset.RasterYSize}\r\n\tBands: {dataset.RasterCount}");
             PixelSize ps = new PixelSize(dataset.RasterXSize, dataset.RasterYSize);
-            Vector dpi = new Vector(1,1);
+            Vector dpi = new Vector(1, 1);
             WriteableBitmap bmp = new WriteableBitmap(ps, dpi, Avalonia.Platform.PixelFormat.Rgba8888);
-            
-            st.Start();
+            short[] buffer;
+            double mult = 0;
+            short min = 0;
+            st.Restart();
             using (var buf = bmp.Lock())
             {
                 Console.WriteLine($"Bmp rowBytes: {buf.RowBytes}");
                 IntPtr ptr = buf.Address;
                 var band = dataset.GetRasterBand(5);
-                var buffer = new short[dataset.RasterXSize * dataset.RasterYSize];
+                buffer = new short[dataset.RasterXSize * dataset.RasterYSize];
                 band.ReadRaster(0, 0, dataset.RasterXSize, dataset.RasterYSize, buffer, dataset.RasterXSize, dataset.RasterYSize, 0, 0);
                 double[] args = new double[2];
                 band.ComputeRasterMinMax(args, 0);
                 Console.WriteLine($"Min: {args[0]}, Max: {args[1]}");
-                var mult = 255 / args[1] - args[0];
+                min = (short)(args[0]);
+                mult = 255 / (args[1] - args[0]);
                 var rgbaBuf = buffer
-                    .Select(x => (byte)(x * mult))
-                    .SelectMany(x => new byte[] { x, Math.Max((byte)60, x), 0, 255 })
+                    .Select(x => (byte)((x - min) * mult))
+                    .SelectMany(x => new byte[] { x, x, x, 255 })
                     .ToArray();
                 Marshal.Copy(rgbaBuf, 0, ptr, rgbaBuf.Length);
             }
@@ -79,8 +75,57 @@ namespace AvaloniaMVVM
             Console.WriteLine($"Elapsed: {st.ElapsedMilliseconds}");
             vm.Greeting = "ololo";
             vm.RenderImage = bmp;
+
+            var data = new uint[0];
+            foreach (var acc in Accelerator.Accelerators)
+            {
+                Console.WriteLine($"{acc.AcceleratorType} {acc.DeviceId}");
+            }
+
+            using (var context = new Context())
+            {
+                using (var accelerator = new CudaAccelerator(context))
+                {
+                    var myKernel = accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<uint>, ArrayView<short>, double, short>(PicConvertion);
+
+                    // Allocate some memory
+                    using (var bufOut = accelerator.Allocate<uint>(dataset.RasterXSize * dataset.RasterYSize))
+                    using (var bufIn = accelerator.Allocate<short>(dataset.RasterXSize * dataset.RasterYSize))
+                    {
+                        bufIn.CopyFrom(buffer, 0, 0, buffer.Length);
+                        // Launch buffer.Length many threads and pass a view to buffer
+                        myKernel(buffer.Length, bufOut.View, bufIn.View, mult, min);
+
+                        // Wait for the kernel to finish...
+                        accelerator.Synchronize();
+
+                        // Resolve data
+                        data = bufOut.GetAsArray();
+                    }
+                }
+            }
+
+            using (var buf = bmp.Lock())
+            {
+                IntPtr ptr = buf.Address;
+                Marshal.Copy((int[])(object)data, 0, ptr, data.Length);
+            }
             dataset.Dispose();
             return vm;
+        }
+
+        static void MyKernel(
+            Index index, // The global thread index (1D in this case)
+            ArrayView<int> dataView, // A view to a chunk of memory (1D in this case)
+        int constant) // A sample uniform constant
+        {
+            dataView[index] = index + constant;
+        }
+
+        static void PicConvertion(Index index, ArrayView<uint> buf1, ArrayView<short> buf2, double mult, short min)
+        {
+            byte rad = (byte)((buf2[index] - min) * mult);
+            buf1[index] = (uint)(rad + (rad << 8) + (rad << 16) + (255 << 24));
         }
 
         //[DllImport(@"./CMakeLibrary", EntryPoint = "Add")]
