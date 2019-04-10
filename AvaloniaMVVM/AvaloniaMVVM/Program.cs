@@ -13,6 +13,7 @@ using System.Diagnostics;
 using ILGPU;
 using ILGPU.Runtime.Cuda;
 using ILGPU.Runtime;
+using ILGPU.Runtime.CPU;
 
 namespace AvaloniaMVVM
 {
@@ -39,87 +40,87 @@ namespace AvaloniaMVVM
         public static MainWindowViewModel GetModel()
         {
             var vm = new MainWindowViewModel();
-            Stopwatch st = new Stopwatch();
-            st.Start();
-            Dataset dataset = Gdal.Open(picturePath, Access.GA_ReadOnly);
-            st.Stop();
-            Console.WriteLine($"Dataset loaded successfully in {st.ElapsedMilliseconds} ms.");
-            Console.WriteLine($"Dataset dimensions:\r\n\tWidth: {dataset.RasterXSize}\r\n\tHeight: {dataset.RasterYSize}\r\n\tBands: {dataset.RasterCount}");
-            PixelSize ps = new PixelSize(dataset.RasterXSize, dataset.RasterYSize);
-            Vector dpi = new Vector(1, 1);
-            WriteableBitmap bmp = new WriteableBitmap(ps, dpi, Avalonia.Platform.PixelFormat.Rgba8888);
-            short[] buffer;
-            double mult = 0;
-            short min = 0;
-            st.Restart();
-            using (var buf = bmp.Lock())
-            {
-                Console.WriteLine($"Bmp rowBytes: {buf.RowBytes}");
-                IntPtr ptr = buf.Address;
-                var band = dataset.GetRasterBand(5);
-                buffer = new short[dataset.RasterXSize * dataset.RasterYSize];
-                band.ReadRaster(0, 0, dataset.RasterXSize, dataset.RasterYSize, buffer, dataset.RasterXSize, dataset.RasterYSize, 0, 0);
-                double[] args = new double[2];
-                band.ComputeRasterMinMax(args, 0);
-                Console.WriteLine($"Min: {args[0]}, Max: {args[1]}");
-                min = (short)(args[0]);
-                mult = 255 / (args[1] - args[0]);
-                var rgbaBuf = buffer
-                    .Select(x => (byte)((x - min) * mult))
-                    .SelectMany(x => new byte[] { x, x, x, 255 })
-                    .ToArray();
-                Marshal.Copy(rgbaBuf, 0, ptr, rgbaBuf.Length);
-            }
-            //bmp.Save("D:/pic.png");
-            st.Stop();
-            Console.WriteLine($"Elapsed: {st.ElapsedMilliseconds}");
-            vm.Greeting = "ololo";
-            vm.RenderImage = bmp;
+            
+            ////return vm;
+            //Stopwatch st = new Stopwatch();
+            //st.Start();
+            //Dataset dataset = Gdal.Open(picturePath, Access.GA_ReadOnly);
+            //st.Stop();
+            //Console.WriteLine($"Dataset loaded successfully in {st.ElapsedMilliseconds} ms.");
+            //Console.WriteLine($"Dataset dimensions:\r\n\tWidth: {dataset.RasterXSize}\r\n\tHeight: {dataset.RasterYSize}\r\n\tBands: {dataset.RasterCount}");
+            //PixelSize ps = new PixelSize(dataset.RasterXSize, dataset.RasterYSize);
+            //Vector dpi = new Vector(1, 1);
+            //WriteableBitmap bmp = new WriteableBitmap(ps, dpi, Avalonia.Platform.PixelFormat.Rgba8888);
+            //short[] buffer;
+            //double mult = 0;
+            //short min = 0;
+            //st.Restart();
+            //using (var buf = bmp.Lock())
+            //{
+            //    Console.WriteLine($"Bmp rowBytes: {buf.RowBytes}");
+            //    IntPtr ptr = buf.Address;
+            //    var band = dataset.GetRasterBand(5);
+            //    buffer = new short[dataset.RasterXSize * dataset.RasterYSize];
+            //    band.ReadRaster(0, 0, dataset.RasterXSize, dataset.RasterYSize, buffer, dataset.RasterXSize, dataset.RasterYSize, 0, 0);
+            //    double[] args = new double[2];
+            //    band.ComputeRasterMinMax(args, 0);
+            //    Console.WriteLine($"Min: {args[0]}, Max: {args[1]}");
+            //    min = (short)(args[0]);
+            //    mult = 255 / (args[1] - args[0]);
+            //    var rgbaBuf = buffer
+            //        .Select(x => (byte)((x - min) * mult))
+            //        .SelectMany(x => new byte[] { x, x, x, 255 })
+            //        .ToArray();
+            //    Marshal.Copy(rgbaBuf, 0, ptr, rgbaBuf.Length);
+            //}
+            ////bmp.Save("D:/pic.png");
+            //st.Stop();
+            //Console.WriteLine($"Elapsed: {st.ElapsedMilliseconds}");
+            //vm.Greeting = "ololo";
+            //vm.RenderImage = bmp;
 
-            var data = new uint[0];
-            foreach (var acc in Accelerator.Accelerators)
-            {
-                Console.WriteLine($"{acc.AcceleratorType} {acc.DeviceId}");
-            }
+            //var data = new uint[0];
+            //Console.WriteLine();
+            //Console.WriteLine("Accelerators:");
+            //foreach (var acc in Accelerator.Accelerators)
+            //{
+            //    Console.WriteLine($"\t{acc.AcceleratorType} {acc.DeviceId}");
+            //}
 
-            using (var context = new Context())
-            {
-                using (var accelerator = new CudaAccelerator(context))
-                {
-                    var myKernel = accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<uint>, ArrayView<short>, double, short>(PicConvertion);
+            //using (var context = new Context())
+            //{
+            //    Accelerator accelerator = Accelerator.Accelerators.FirstOrDefault(x => x.AcceleratorType == AcceleratorType.Cuda) != null
+            //        ? new CudaAccelerator(context)
+            //        : (Accelerator)new CPUAccelerator(context);
 
-                    // Allocate some memory
-                    using (var bufOut = accelerator.Allocate<uint>(dataset.RasterXSize * dataset.RasterYSize))
-                    using (var bufIn = accelerator.Allocate<short>(dataset.RasterXSize * dataset.RasterYSize))
-                    {
-                        bufIn.CopyFrom(buffer, 0, 0, buffer.Length);
-                        // Launch buffer.Length many threads and pass a view to buffer
-                        myKernel(buffer.Length, bufOut.View, bufIn.View, mult, min);
+            //    using (accelerator)
+            //    {
+            //        var myKernel = accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<uint>, ArrayView<short>, double, short>(PicConvertion);
 
-                        // Wait for the kernel to finish...
-                        accelerator.Synchronize();
+            //        // Allocate some memory
+            //        using (var bufOut = accelerator.Allocate<uint>(dataset.RasterXSize * dataset.RasterYSize))
+            //        using (var bufIn = accelerator.Allocate<short>(dataset.RasterXSize * dataset.RasterYSize))
+            //        {
+            //            bufIn.CopyFrom(buffer, 0, 0, buffer.Length);
+            //            // Launch buffer.Length many threads and pass a view to buffer
+            //            myKernel(buffer.Length, bufOut.View, bufIn.View, mult, min);
 
-                        // Resolve data
-                        data = bufOut.GetAsArray();
-                    }
-                }
-            }
+            //            // Wait for the kernel to finish...
+            //            accelerator.Synchronize();
 
-            using (var buf = bmp.Lock())
-            {
-                IntPtr ptr = buf.Address;
-                Marshal.Copy((int[])(object)data, 0, ptr, data.Length);
-            }
-            dataset.Dispose();
+            //            // Resolve data
+            //            data = bufOut.GetAsArray();
+            //        }
+            //    }
+            //}
+
+            //using (var buf = bmp.Lock())
+            //{
+            //    IntPtr ptr = buf.Address;
+            //    Marshal.Copy((int[])(object)data, 0, ptr, data.Length);
+            //}
+            //dataset.Dispose();
             return vm;
-        }
-
-        static void MyKernel(
-            Index index, // The global thread index (1D in this case)
-            ArrayView<int> dataView, // A view to a chunk of memory (1D in this case)
-        int constant) // A sample uniform constant
-        {
-            dataView[index] = index + constant;
         }
 
         static void PicConvertion(Index index, ArrayView<uint> buf1, ArrayView<short> buf2, double mult, short min)

@@ -6,17 +6,27 @@
         Height="640"
         Width="1280">
 
-    <Design.DataContext>
-        <vm:MainWindowViewModel/>
-    </Design.DataContext>
+  <Design.DataContext>
+    <vm:MainWindowViewModel/>
+  </Design.DataContext>
 
   <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto"/>
       <RowDefinition Height="*"/>
     </Grid.RowDefinitions>
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="0" Grid.Row="0"/>
-    <Image x:Name="ImageCtrl" Source="{Binding RenderImage}" Grid.Column="0" Grid.Row="1" Stretch="Uniform"/>
+    <Grid>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="Auto"/>
+      </Grid.ColumnDefinitions>
+      <TextBlock Text="{Binding Greeting}" Grid.Column="0" Grid.Row="0"/>
+      <TextBox x:Name="Band" Grid.Column="1" Text="{Binding Band}" Width="50"/>
+      <Button Grid.Column="2" Command="{Binding ChangeBand}">Render band</Button>
+    </Grid>
+
+    <Image Source="{Binding RenderImage}" Grid.Column="0" Grid.Row="1" Stretch="Uniform"/>
   </Grid>
 
 </Window>

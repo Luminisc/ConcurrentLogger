@@ -17,13 +17,14 @@ namespace AvaloniaMVVM.Views
             this.AttachDevTools();
 #endif
 
-            _img = this.FindControl<Image>("ImageCtrl");
-            this.Opened += MainWindow_Opened;
+            // _img = this.FindControl<Image>("ImageCtrl");
+
+            this.Closing += MainWindow_Closing;
         }
 
-        private void MainWindow_Opened(object sender, System.EventArgs e)
+        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            _img.Source = ((MainWindowViewModel)DataContext).RenderImage;
+            ((MainWindowViewModel)DataContext).Dispose();
         }
 
         private void InitializeComponent()
