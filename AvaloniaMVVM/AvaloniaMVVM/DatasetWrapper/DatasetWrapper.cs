@@ -31,7 +31,7 @@ namespace AvaloniaMVVM.DatasetWrapper
         {
             dataset = Gdal.Open(picturePath, Access.GA_ReadOnly);
             context = new Context();
-            accelerator = Accelerator.Accelerators.FirstOrDefault(x => x.AcceleratorType == AcceleratorType.Cuda) != null
+            accelerator = Accelerator.Accelerators.Any(x => x.AcceleratorType == AcceleratorType.Cuda)
                 ? new CudaAccelerator(context)
                 : (Accelerator)new CPUAccelerator(context);
         }
