@@ -10,9 +10,10 @@ namespace AvaloniaMVVM.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase, IDisposable
     {
+        
         public MainWindowViewModel()
         {
-            wrapper.LoadDatasetInVideoMemory();
+            wrapper = new DatasetWrapper.DatasetWrapper();
             RenderImage = new WriteableBitmap(new PixelSize(wrapper.Width, wrapper.Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888);
         }
 
@@ -32,10 +33,17 @@ namespace AvaloniaMVVM.ViewModels
             set => this.RaiseAndSetIfChanged(ref _band, value);
         }
 
-        protected DatasetWrapper.DatasetWrapper wrapper = new DatasetWrapper.DatasetWrapper();
+        protected DatasetWrapper.DatasetWrapper wrapper;
+        protected bool loaded = false;
 
         public void ChangeBand()
         {
+            if (!loaded)
+            {
+                wrapper.LoadDatasetInVideoMemory();
+                loaded = true;
+            }
+
             var band = Band;
             if (band < 1) band = 1;
             if (band > wrapper.Depth) band = wrapper.Depth;
@@ -49,7 +57,7 @@ namespace AvaloniaMVVM.ViewModels
 
         public void Dispose()
         {
-            wrapper.Dispose();
+            wrapper?.Dispose();
         }
     }
 }

@@ -13,6 +13,9 @@ namespace AvaloniaMVVM.Kernels
             buf1[index] = (uint)(rad + (rad << 8) + (rad << 16) + (255 << 24));
         }
 
-
+        public static void PearsonCorrelation(Index index, VariableView<double> result, ArrayView<short> bufIn1, ArrayView<short> bufIn2)
+        {
+            
+        }
     }
 }
