@@ -8,7 +8,7 @@ namespace AvaloniaMVVM.Etc
 {
     public class DataExporter
     {
-        public static void ExportHistogramInCsv(HistogramData data)
+        public static void ExportHistogramInCsv(HistogramData data, int depth)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"Brightness;Count");
@@ -16,10 +16,10 @@ namespace AvaloniaMVVM.Etc
             {
                 sb.AppendLine($"{i + 1};{data.histogramData[i]}");
             }
-            File.WriteAllText($"D://Temp/histogramData_{DateTime.Now.ToFileTime().ToString()}.csv", sb.ToString());
+            File.WriteAllText($"D://Temp/histogramData_{depth}Bands_{DateTime.Now.ToFileTime().ToString()}.csv", sb.ToString());
         }
 
-        public static void ExportBrightnessInCsv(BrightnessCalculationData data)
+        public static void ExportBrightnessInCsv(BrightnessCalculationData data, int depth)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"Channel;Mean value;Max value; Deviation value");
@@ -27,7 +27,7 @@ namespace AvaloniaMVVM.Etc
             {
                 sb.AppendLine($"{i + 1};{data.arrMeanBrightness[i]};{data.arrMaxBrightness[i]};{data.arrStandartDeviation[i]}");
             }
-            File.WriteAllText($"D://Temp/brightnessData_{DateTime.Now.ToFileTime().ToString()}.csv", sb.ToString());
+            File.WriteAllText($"D://Temp/brightnessData_{depth}Bands_{DateTime.Now.ToFileTime().ToString()}.csv", sb.ToString());
         }
     }
 }

@@ -122,7 +122,7 @@ namespace AvaloniaMVVM.ViewModels
             sb.AppendLine($"Most frequent brightness: {hist.histogramData.Skip(1).Max()}");
             Description = sb.ToString();
 
-            DataExporter.ExportHistogramInCsv(hist);
+            DataExporter.ExportHistogramInCsv(hist, wrapper.Depth);
         }
 
         public void RenderBrightnessCalculationData()
@@ -145,7 +145,7 @@ namespace AvaloniaMVVM.ViewModels
             sb.AppendLine($"Maximum mean value: {maxMean} in {maxMeanBand + 1} band");
 
             Description = sb.ToString();
-            DataExporter.ExportBrightnessInCsv(calcs);
+            DataExporter.ExportBrightnessInCsv(calcs, wrapper.Depth);
         }
 
         public void ConvertToByteRepresentation()

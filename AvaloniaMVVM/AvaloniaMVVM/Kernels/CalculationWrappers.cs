@@ -252,8 +252,11 @@ namespace AvaloniaMVVM.Kernels
                 floatToByteKernel(calcBuf.Extent.Size, calcBuf.AsLinearView(), byteBuf.AsLinearView());
                 GpuContext.Instance.Accelerator.Synchronize();
 
-                thresholdingKernel(byteBuf.Extent.Size, byteBuf.AsLinearView(), lowThreshold, highThreshold);
-                GpuContext.Instance.Accelerator.Synchronize();
+                if (highThreshold != 0 || lowThreshold != 0)
+                {
+                    thresholdingKernel(byteBuf.Extent.Size, byteBuf.AsLinearView(), lowThreshold, highThreshold);
+                    GpuContext.Instance.Accelerator.Synchronize();
+                }                
 
                 pinConvertFromByteKernel(slice.Extent.Size, ImageBuf.GetSliceView(0).AsLinearView(), byteBuf.GetSliceView(0).AsLinearView(), 1.0, 0);
                 pinConvertFromByteKernel(slice.Extent.Size, ImageBuf.GetSliceView(1).AsLinearView(), byteBuf.GetSliceView(1).AsLinearView(), 1.0, 0);

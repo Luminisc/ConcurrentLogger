@@ -36,7 +36,7 @@ namespace AvaloniaMVVM.DatasetWrapper
 
             //Width = 20;
             //Height = 20;
-            Depth = 100;
+            //Depth = 100;
         }
 
         ~DatasetWrapper()
@@ -193,7 +193,7 @@ namespace AvaloniaMVVM.DatasetWrapper
                     IntPtr ptr = buf.Address;
                     Marshal.Copy((int[])(object)data.xyCorrelation, 0, ptr, data.xyCorrelation.Length);
                 }
-                img.Save($"D://Temp/PearsonCorrelation_{highThreshold}Threshold_{time}.png");
+                img.Save($"D://Temp/PearsonCorrelation_{dataset_v_byte.Depth}Bands_{(highThreshold == 0 ? "No" : highThreshold.ToString())}Threshold_{time}.png");
             }
 
             using (var buf = bmp.Lock())
@@ -232,7 +232,7 @@ namespace AvaloniaMVVM.DatasetWrapper
                 System.Text.StringBuilder sb = new System.Text.StringBuilder();
                 sb.Append($"SignatureLengthEdges_short_{Depth}Bands_Clamped");
                 if (normalize)
-                    sb.Append("_clamped");
+                    sb.Append("_normalized");
                 sb.Append($"_{time}.png");
 
                 using (var buf = img.Lock())
@@ -272,7 +272,7 @@ namespace AvaloniaMVVM.DatasetWrapper
                 System.Text.StringBuilder sb = new System.Text.StringBuilder();
                 sb.Append($"SignatureLengthEdges_byte_{Depth}Bands");
                 if (normalize)
-                    sb.Append("_clamped");
+                    sb.Append("_normalized");
                 sb.Append($"_{time}.png");
 
                 using (var buf = img.Lock())
