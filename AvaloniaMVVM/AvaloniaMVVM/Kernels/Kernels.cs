@@ -15,8 +15,7 @@ namespace AvaloniaMVVM.Kernels
 
         public static void PicConvertionByte(Index index, ArrayView<uint> buf1, ArrayView<byte> buf2, double mult = 1, short min = 0)
         {
-            var val = buf2[index];
-            byte rad = (byte)(255 - val);
+            byte rad = buf2[index];
             if (rad == 255)
                 rad = 254; // because there are issue with saving of white pixels
 
@@ -200,30 +199,15 @@ namespace AvaloniaMVVM.Kernels
 
         public static void CorrelationMapToRgba32(Index2 index, ArrayView2D<uint> result, ArrayView2D<double> bufIn1)
         {
-            double threshold = 0.9;
             double r = bufIn1[index];
             byte rad = 0;
 
             r = XMath.Abs(r);
             if (r > 1) r = 1;
 
-
-            //if (r < threshold)
-            //    r = 0;
-            //else
-            //{
-            //    r = (r - threshold) * (1 / (1 - threshold));
-            //    rad = (byte)(255 * XMath.Abs(r));
-            //}
-
             rad = (byte)(255 * r);
 
             result[index] = (uint)(rad + (rad << 8) + (rad << 16) + (255 << 24));
-
-            //if (r > 0)
-            //    result[index] = (uint)(rad + (rad << 8) + (rad << 16) + (255 << 24));
-            //else
-            //    result[index] = (uint)((rad << 16) + (255 << 24));
         }
         #endregion
 
@@ -259,12 +243,6 @@ namespace AvaloniaMVVM.Kernels
             {
                 var kern = image.GetSliceView(i).GetSubView(new Index2(index.X - 1, index.Y - 1), new Index2(3, 3));
                 short val = 0;
-                //for (int j = 0; j < 9; j++)
-                //{
-                //    var x = j % 9;
-                //    var y = j / 9;
-                //    val += (short)(kern[x, y] * sobelXKern[j]);
-                //}
 
                 val += (short)(kern[0, 0] * -1);
                 val += (short)(kern[2, 0] * 1);
@@ -300,20 +278,14 @@ namespace AvaloniaMVVM.Kernels
             {
                 var kern = image.GetSubView(new Index3(index.X - 1, index.Y - 1, i), new Index3(3, 3, 1)).GetSliceView(0);
                 short val = 0;
-                //for (int j = 0; j < 9; j++)
-                //{
-                //    var x = j % 9;
-                //    var y = j / 9;
-                //    val += (short)(kern[x, y] * sobelYKern[x, y]);
-                //}
+
                 val += (short)(kern[0, 0] * -1);
                 val += (short)(kern[1, 0] * -2);
                 val += (short)(kern[2, 0] * -1);
                 val += (short)(kern[0, 2] * 1);
                 val += (short)(kern[1, 2] * 2);
                 val += (short)(kern[2, 2] * 1);
-                //result[index.X, index.Y, i] = val;
-                result[index.X, index.Y, i] = kern[1, 1];
+                result[index.X, index.Y, i] = val;
             }
         }
 
@@ -324,7 +296,7 @@ namespace AvaloniaMVVM.Kernels
 
         public static void CalculateSobel(Index2 index, ArrayView2D<short> result, ArrayView3D<short> accumulatedSobel)
         {
-            var val = KernelHelpers.Magnitude(accumulatedSobel.GetDepthView(index.X, index.Y));
+            var val = KernelHelpers.Magnitude(accumulatedSobel, index);
             result[index] = val;
         }
         #endregion
@@ -352,26 +324,8 @@ namespace AvaloniaMVVM.Kernels
             output[index] = result;
         }
 
-        public static void Max(Index index, VariableView<int> output, ArrayView<byte> input)
-        {
-            var compareVal = output.Value;
-            var value = input[index];
-            if (compareVal < input[index])
-            {
-                int oldVal = Atomic.CompareExchange(ref output.Value, compareVal, value);
-
-                do
-                {
-
-                } while (false);
-            }
-
-        }
-
         public static void Normalize(Index index, ArrayView<float> input, float scale)
         {
-            //var val = input[index];
-            //input[index] = val / scale;
             input[index] /= scale;
         }
 

@@ -36,11 +36,11 @@ namespace AvaloniaMVVM.DatasetWrapper
 
             Width = dataset.RasterXSize;
             Height = dataset.RasterYSize;
-            //Depth = dataset.RasterCount - 1;
+            Depth = dataset.RasterCount;
 
             //Width = 20;
             //Height = 20;
-            Depth = 100;
+            //Depth = 100;
         }
 
         ~DatasetWrapper()

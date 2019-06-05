@@ -100,18 +100,13 @@ namespace AvaloniaMVVM.Kernels
             using (var bufMap = GpuContext.Instance.Accelerator.Allocate<short>(index))
             using (var bufOut2 = GpuContext.Instance.Accelerator.Allocate<uint>(index))
             {
-                //horizontalSobelKernel(index, bufHor.View, imageView);
-                //GpuContext.Instance.Accelerator.Synchronize();
-                //verticalSobelKernel(index, bufVer.View, imageView);
-                //GpuContext.Instance.Accelerator.Synchronize();
-                //accumulateSobelKernel(ind3, bufAccum.View, bufHor.View, bufVer.View);
-                //GpuContext.Instance.Accelerator.Synchronize();
-                //calculateSobelKernel(index, bufMap.View, bufAccum.View);
-                //GpuContext.Instance.Accelerator.Synchronize();
-
+                horizontalSobelKernel(index, bufHor.View, imageView);
+                GpuContext.Instance.Accelerator.Synchronize();
                 verticalSobelKernel(index, bufVer.View, imageView);
                 GpuContext.Instance.Accelerator.Synchronize();
-                calculateSobelKernel(index, bufMap.View, bufVer.View);
+                accumulateSobelKernel(bufAccum.Extent, bufAccum.View, bufHor.View, bufVer.View);
+                GpuContext.Instance.Accelerator.Synchronize();
+                calculateSobelKernel(index, bufMap.View, bufAccum.View);
                 GpuContext.Instance.Accelerator.Synchronize();
 
                 pinConvertKernel(index.Size, bufOut2.AsLinearView(), bufMap.AsLinearView(), 1, 0);
