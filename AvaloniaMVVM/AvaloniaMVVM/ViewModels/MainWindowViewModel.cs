@@ -52,9 +52,31 @@ namespace AvaloniaMVVM.ViewModels
             }
         }
 
+        protected byte lowThresholdValue = 0;
+        public byte LowThresholdValue
+        {
+            get => lowThresholdValue;
+            set
+            {
+                var val = value;
+                this.RaiseAndSetIfChanged(ref lowThresholdValue, val);
+            }
+        }
+        protected byte highThresholdValue = 0;
+        public byte HighThresholdValue
+        {
+            get => highThresholdValue;
+            set
+            {
+                var val = value;
+                this.RaiseAndSetIfChanged(ref highThresholdValue, val);
+            }
+        }
+
+
         protected DatasetWrapper.DatasetWrapper wrapper;
         protected bool loaded = false;
-        protected double maxMeanBrightness = 0.0;
+        protected double maxMeanBrightness = short.MaxValue / 2;
 
         public void ChangeBand()
         {
@@ -138,7 +160,47 @@ namespace AvaloniaMVVM.ViewModels
         {
             var img = _renderImage;
             RenderImage = null;
-            wrapper.RenderPearsonCorrelation(ref img);
+            wrapper.RenderPearsonCorrelation(ref img, 0, highThresholdValue);
+            RenderImage = img;
+        }
+
+        public void RenderSignatureLengthDerivative()
+        {
+            InitializeDataset();
+
+            var img = _renderImage;
+            RenderImage = null;
+            wrapper.RenderSignatureLengthDerivative(ref img, false, (short)(maxMeanBrightness * 2));
+            RenderImage = img;
+        }
+
+        public void RenderSignatureLengthDerivativeNormalize()
+        {
+            InitializeDataset();
+
+            var img = _renderImage;
+            RenderImage = null;
+            wrapper.RenderSignatureLengthDerivative(ref img, true, (short)(maxMeanBrightness * 2));
+            RenderImage = img;
+        }
+
+        public void RenderByteSignatureLengthDerivative()
+        {
+            InitializeDataset();
+
+            var img = _renderImage;
+            RenderImage = null;
+            wrapper.RenderByteSignatureLengthDerivative(ref img, false);
+            RenderImage = img;
+        }
+
+        public void RenderByteSignatureLengthDerivativeNormalize()
+        {
+            InitializeDataset();
+
+            var img = _renderImage;
+            RenderImage = null;
+            wrapper.RenderByteSignatureLengthDerivative(ref img, true);
             RenderImage = img;
         }
 

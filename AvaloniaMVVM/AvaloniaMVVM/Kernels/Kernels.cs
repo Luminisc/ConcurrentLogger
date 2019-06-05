@@ -324,9 +324,9 @@ namespace AvaloniaMVVM.Kernels
             output[index] = result;
         }
 
-        public static void Normalize(Index index, ArrayView<float> input, float scale)
+        public static void NormalizeValues(Index index, ArrayView<float> input, float maxValue)
         {
-            input[index] /= scale;
+            input[index] /= maxValue;
         }
 
         public static void FloatToByte(Index index, ArrayView<float> input, ArrayView<byte> output)
@@ -337,6 +337,19 @@ namespace AvaloniaMVVM.Kernels
             if (val < 0)
                 val = 0;
             output[index] = (byte)(val * 255);
+        }
+
+        public static void Thresholding(Index index, ArrayView<byte> input, byte lowThreshold, byte highThreshold)
+        {
+            // TODO: correct two-side thresholding
+            var val = input[index];
+
+            if (val > highThreshold)
+                val = 255;
+            else
+                val = 0;
+
+            input[index] = val;
         }
         #endregion
     }

@@ -219,11 +219,16 @@ namespace AvaloniaMVVM.Kernels
             return (outputBuf, buff);
         }
 
+        static Action<Index, ArrayView<byte>, byte, byte> thresholdingKernel =
+            GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<byte>, byte, byte>(Kernels.Thresholding);
+        static Action<Index, ArrayView<float>, ArrayView<byte>> floatToByteKernel =
+            GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<float>, ArrayView<byte>>(Kernels.FloatToByte);
+
         public static CorrelationData CalculatePearsonCorrelation(ArrayView3D<byte> imageView, byte lowThreshold = 0, byte highThreshold = 0)
         {
             var pearsonKernel = GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index2, ArrayView3D<float>, ArrayView3D<byte>>(CorrelationKernels.CorrelationMap);
-            var normilizeKernel = GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<float>, float>(Kernels.Normalize);
-            var byteToFloatKernel = GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<float>, ArrayView<byte>>(Kernels.FloatToByte);
+            var normilizeKernel = GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<float>, float>(Kernels.NormalizeValues);
+
             var result = new CorrelationData();
 
             var slice = imageView.GetSliceView(0);
@@ -244,7 +249,10 @@ namespace AvaloniaMVVM.Kernels
                 normilizeKernel(slice.Extent.Size, calcBuf.GetSliceView(1).AsLinearView(), maxGradientValue);
                 GpuContext.Instance.Accelerator.Synchronize();
 
-                byteToFloatKernel(calcBuf.Extent.Size, calcBuf.AsLinearView(), byteBuf.AsLinearView());
+                floatToByteKernel(calcBuf.Extent.Size, calcBuf.AsLinearView(), byteBuf.AsLinearView());
+                GpuContext.Instance.Accelerator.Synchronize();
+
+                thresholdingKernel(byteBuf.Extent.Size, byteBuf.AsLinearView(), lowThreshold, highThreshold);
                 GpuContext.Instance.Accelerator.Synchronize();
 
                 pinConvertFromByteKernel(slice.Extent.Size, ImageBuf.GetSliceView(0).AsLinearView(), byteBuf.GetSliceView(0).AsLinearView(), 1.0, 0);
@@ -267,6 +275,131 @@ namespace AvaloniaMVVM.Kernels
                 Array.Copy(img, size * 2, buf, 0, size);
                 result.xyCorrelation = buf;
 
+            }
+
+            return result;
+        }
+    }
+
+    public static class EdgeDetectionWrapper
+    {
+        static Action<Index2, ArrayView3D<float>, ArrayView3D<short>, short> calculateSignatureLengthDerivativeKernel =
+            GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index2, ArrayView3D<float>, ArrayView3D<short>, short>(EdgeDetectionKernels.CalculateSignatureLengthDerivative);
+        static Action<Index2, ArrayView3D<float>, ArrayView3D<short>, short> calculateSignatureLengthDerivativeWithNormalizationKernel =
+            GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index2, ArrayView3D<float>, ArrayView3D<short>, short>(EdgeDetectionKernels.CalculateSignatureLengthDerivativeWithNormalization);
+        static Action<Index2, ArrayView3D<float>, ArrayView3D<byte>> b_calculateSignatureLengthDerivativeKernel =
+            GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index2, ArrayView3D<float>, ArrayView3D<byte>>(EdgeDetectionKernels.CalculateSignatureLengthDerivative);
+        static Action<Index2, ArrayView3D<float>, ArrayView3D<byte>> b_calculateSignatureLengthDerivativeWithNormalizationKernel =
+            GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index2, ArrayView3D<float>, ArrayView3D<byte>>(EdgeDetectionKernels.CalculateSignatureLengthDerivativeWithNormalization);
+        static Action<Index2, ArrayView3D<float>, int, float> normalizeLengthMapKernel =
+            GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index2, ArrayView3D<float>, int, float>(EdgeDetectionKernels.NormalizeLengthMap);
+        static Action<Index, ArrayView<float>, ArrayView<byte>> floatToByteKernel =
+            GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<float>, ArrayView<byte>>(Kernels.FloatToByte);
+
+        static Action<Index, ArrayView<uint>, ArrayView<byte>, double, short> pinConvertFromByteKernel { get { return GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<uint>, ArrayView<byte>, double, short>(Kernels.PicConvertionByte); } }
+
+        public static PicturesData CalculateSignatureLengthDerivative(ArrayView3D<short> imageView, bool normalize, short maxValue)
+        {
+            PicturesData result = new PicturesData();
+            var slice = imageView.GetSliceView(0);
+            var picIndex = new Index3(slice.Extent.X, slice.Extent.Y, 3);
+
+            using (var calcBuffer = GpuContext.Instance.Accelerator.Allocate<float>(picIndex))
+            using (var byteBuf = GpuContext.Instance.Accelerator.Allocate<byte>(picIndex))
+            using (var imageBuffer = GpuContext.Instance.Accelerator.Allocate<uint>(picIndex))
+            {
+                if (normalize)
+                    calculateSignatureLengthDerivativeWithNormalizationKernel(slice.Extent, calcBuffer.View, imageView, maxValue);
+                else
+                    calculateSignatureLengthDerivativeKernel(slice.Extent, calcBuffer.View, imageView, maxValue);
+                GpuContext.Instance.Accelerator.Synchronize();
+
+                var array = calcBuffer.GetAsArray();
+                var maxBand1 = array.Take(slice.Extent.Size).Max();
+                var maxBand2 = array.Skip(slice.Extent.Size).Take(slice.Extent.Size).Max();
+                //var maxBand3 = array.Skip(slice.Extent.Size * 2).Max();
+                var maxBand3 = XMath.Max(maxBand1, maxBand2);
+
+                normalizeLengthMapKernel(slice.Extent, calcBuffer, 0, maxBand1); GpuContext.Instance.Accelerator.Synchronize();
+                normalizeLengthMapKernel(slice.Extent, calcBuffer, 1, maxBand2); GpuContext.Instance.Accelerator.Synchronize();
+                normalizeLengthMapKernel(slice.Extent, calcBuffer, 2, maxBand3); GpuContext.Instance.Accelerator.Synchronize();
+
+                floatToByteKernel(calcBuffer.Extent.Size, calcBuffer.AsLinearView(), byteBuf.AsLinearView());
+                GpuContext.Instance.Accelerator.Synchronize();
+
+                pinConvertFromByteKernel(slice.Extent.Size, imageBuffer.GetSliceView(0).AsLinearView(), byteBuf.GetSliceView(0).AsLinearView(), 1.0, 0);
+                pinConvertFromByteKernel(slice.Extent.Size, imageBuffer.GetSliceView(1).AsLinearView(), byteBuf.GetSliceView(1).AsLinearView(), 1.0, 0);
+                pinConvertFromByteKernel(slice.Extent.Size, imageBuffer.GetSliceView(2).AsLinearView(), byteBuf.GetSliceView(2).AsLinearView(), 1.0, 0);
+                GpuContext.Instance.Accelerator.Synchronize();
+
+                var img = imageBuffer.GetAsArray();
+                var size = slice.Extent.Size;
+
+                var buf = new uint[size];
+                Array.Copy(img, 0, buf, 0, size);
+                result.xPicture = buf;
+
+                buf = new uint[size];
+                Array.Copy(img, size, buf, 0, size);
+                result.yPicture = buf;
+
+                buf = new uint[size];
+                Array.Copy(img, size * 2, buf, 0, size);
+                result.xyPicture = buf;
+            }
+
+            return result;
+        }
+
+        public static PicturesData CalculateSignatureLengthDerivative(ArrayView3D<byte> imageView, bool normalize)
+        {
+            PicturesData result = new PicturesData();
+            var slice = imageView.GetSliceView(0);
+            var picIndex = new Index3(slice.Extent.X, slice.Extent.Y, 3);
+            // foreach pixel, get vectors i-1 & i+1, NORMALIZE each vector, get difference, get length of vector, write value.
+
+            using (var calcBuffer = GpuContext.Instance.Accelerator.Allocate<float>(picIndex))
+            using (var byteBuf = GpuContext.Instance.Accelerator.Allocate<byte>(picIndex))
+            using (var imageBuffer = GpuContext.Instance.Accelerator.Allocate<uint>(picIndex))
+            {
+                if (normalize)
+                    b_calculateSignatureLengthDerivativeWithNormalizationKernel(slice.Extent, calcBuffer.View, imageView);
+                else
+                    b_calculateSignatureLengthDerivativeKernel(slice.Extent, calcBuffer.View, imageView);
+                GpuContext.Instance.Accelerator.Synchronize();
+
+                var array = calcBuffer.GetAsArray();
+                var maxBand1 = array.Take(slice.Extent.Size).Max();
+                var maxBand2 = array.Skip(slice.Extent.Size).Take(slice.Extent.Size).Max();
+                //var maxBand3 = array.Skip(slice.Extent.Size * 2).Max();
+                var maxBand3 = XMath.Max(maxBand1, maxBand2);
+
+                normalizeLengthMapKernel(slice.Extent, calcBuffer, 0, maxBand1); GpuContext.Instance.Accelerator.Synchronize();
+                normalizeLengthMapKernel(slice.Extent, calcBuffer, 1, maxBand2); GpuContext.Instance.Accelerator.Synchronize();
+                normalizeLengthMapKernel(slice.Extent, calcBuffer, 2, maxBand3); GpuContext.Instance.Accelerator.Synchronize();
+
+                floatToByteKernel(calcBuffer.Extent.Size, calcBuffer.AsLinearView(), byteBuf.AsLinearView());
+                GpuContext.Instance.Accelerator.Synchronize();
+
+                pinConvertFromByteKernel(slice.Extent.Size, imageBuffer.GetSliceView(0).AsLinearView(), byteBuf.GetSliceView(0).AsLinearView(), 1.0, 0);
+                pinConvertFromByteKernel(slice.Extent.Size, imageBuffer.GetSliceView(1).AsLinearView(), byteBuf.GetSliceView(1).AsLinearView(), 1.0, 0);
+                pinConvertFromByteKernel(slice.Extent.Size, imageBuffer.GetSliceView(2).AsLinearView(), byteBuf.GetSliceView(2).AsLinearView(), 1.0, 0);
+                GpuContext.Instance.Accelerator.Synchronize();
+
+                var img = imageBuffer.GetAsArray();
+                var size = slice.Extent.Size;
+
+                var buf = new uint[size];
+                Array.Copy(img, 0, buf, 0, size);
+                result.xPicture = buf;
+
+                buf = new uint[size];
+                Array.Copy(img, size, buf, 0, size);
+                result.yPicture = buf;
+
+                buf = new uint[size];
+                Array.Copy(img, size * 2, buf, 0, size);
+                result.xyPicture = buf;
             }
 
             return result;

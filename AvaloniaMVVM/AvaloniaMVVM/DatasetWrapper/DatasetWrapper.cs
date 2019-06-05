@@ -36,7 +36,7 @@ namespace AvaloniaMVVM.DatasetWrapper
 
             //Width = 20;
             //Height = 20;
-            //Depth = 100;
+            Depth = 100;
         }
 
         ~DatasetWrapper()
@@ -173,36 +173,101 @@ namespace AvaloniaMVVM.DatasetWrapper
         {
             var data = CalculationWrappers.CalculatePearsonCorrelation(dataset_v_byte, lowThreshold, highThreshold);
 
-            if (highThreshold == 0 || lowThreshold == 0)
+            using (var img = new WriteableBitmap(new PixelSize(dataset_v_byte.Width, dataset_v_byte.Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888))
             {
-                using (var img = new WriteableBitmap(new PixelSize(dataset_v_byte.Width, dataset_v_byte.Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888))
+                string time = DateTime.Now.ToFileTime().ToString();
+                //using (var buf = img.Lock())
+                //{
+                //    IntPtr ptr = buf.Address;
+                //    Marshal.Copy((int[])(object)data.xCorrelation, 0, ptr, data.xCorrelation.Length);
+                //}
+                //img.Save($"D://Temp/xCorrelation_{time}.png");
+                //using (var buf = img.Lock())
+                //{
+                //    IntPtr ptr = buf.Address;
+                //    Marshal.Copy((int[])(object)data.yCorrelation, 0, ptr, data.yCorrelation.Length);
+                //}
+                //img.Save($"D://Temp/yCorrelation_{time}.png");
+                using (var buf = img.Lock())
                 {
-                    string time = DateTime.Now.ToFileTime().ToString();
-                    using (var buf = img.Lock())
-                    {
-                        IntPtr ptr = buf.Address;
-                        Marshal.Copy((int[])(object)data.xCorrelation, 0, ptr, data.xCorrelation.Length);
-                    }
-                    img.Save($"D://Temp/xCorrelation_{time}.png");
-                    using (var buf = img.Lock())
-                    {
-                        IntPtr ptr = buf.Address;
-                        Marshal.Copy((int[])(object)data.yCorrelation, 0, ptr, data.yCorrelation.Length);
-                    }
-                    img.Save($"D://Temp/yCorrelation_{time}.png");
-                    using (var buf = img.Lock())
-                    {
-                        IntPtr ptr = buf.Address;
-                        Marshal.Copy((int[])(object)data.xyCorrelation, 0, ptr, data.xyCorrelation.Length);
-                    }
-                    img.Save($"D://Temp/xyCorrelation_{time}.png");
+                    IntPtr ptr = buf.Address;
+                    Marshal.Copy((int[])(object)data.xyCorrelation, 0, ptr, data.xyCorrelation.Length);
                 }
+                img.Save($"D://Temp/xyCorrelation_{time}.png");
             }
-            
+
             using (var buf = bmp.Lock())
             {
                 IntPtr ptr = buf.Address;
                 Marshal.Copy((int[])(object)data.xyCorrelation, 0, ptr, data.xyCorrelation.Length);
+            }
+        }
+
+        public void RenderSignatureLengthDerivative(ref WriteableBitmap bmp, bool normalize, short maxValue)
+        {
+            var data = EdgeDetectionWrapper.CalculateSignatureLengthDerivative(dataset_v.View, normalize, maxValue);
+
+            using (var buf = bmp.Lock())
+            {
+                IntPtr ptr = buf.Address;
+                Marshal.Copy((int[])(object)data.xyPicture, 0, ptr, data.xyPicture.Length);
+            }
+
+            using (var img = new WriteableBitmap(new PixelSize(Width, Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888))
+            {
+                string time = DateTime.Now.ToFileTime().ToString();
+                //using (var buf = img.Lock())
+                //{
+                //    IntPtr ptr = buf.Address;
+                //    Marshal.Copy((int[])(object)data.xPicture, 0, ptr, data.xPicture.Length);
+                //}
+                //img.Save($"D://Temp/xPicture_{time}.png");
+                //using (var buf = img.Lock())
+                //{
+                //    IntPtr ptr = buf.Address;
+                //    Marshal.Copy((int[])(object)data.yPicture, 0, ptr, data.yPicture.Length);
+                //}
+                //img.Save($"D://Temp/yPicture_{time}.png");
+                using (var buf = img.Lock())
+                {
+                    IntPtr ptr = buf.Address;
+                    Marshal.Copy((int[])(object)data.xyPicture, 0, ptr, data.xyPicture.Length);
+                }
+                img.Save($"D://Temp/xyPicture_{time}.png");
+            }
+        }
+
+        public void RenderByteSignatureLengthDerivative(ref WriteableBitmap bmp, bool normalize)
+        {
+            var data = EdgeDetectionWrapper.CalculateSignatureLengthDerivative(dataset_v_byte.View, normalize);
+
+            using (var buf = bmp.Lock())
+            {
+                IntPtr ptr = buf.Address;
+                Marshal.Copy((int[])(object)data.xyPicture, 0, ptr, data.xyPicture.Length);
+            }
+
+            using (var img = new WriteableBitmap(new PixelSize(Width, Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888))
+            {
+                string time = DateTime.Now.ToFileTime().ToString();
+                using (var buf = img.Lock())
+                {
+                    IntPtr ptr = buf.Address;
+                    Marshal.Copy((int[])(object)data.xPicture, 0, ptr, data.xPicture.Length);
+                }
+                img.Save($"D://Temp/xPicture_{time}.png");
+                using (var buf = img.Lock())
+                {
+                    IntPtr ptr = buf.Address;
+                    Marshal.Copy((int[])(object)data.yPicture, 0, ptr, data.yPicture.Length);
+                }
+                img.Save($"D://Temp/yPicture_{time}.png");
+                using (var buf = img.Lock())
+                {
+                    IntPtr ptr = buf.Address;
+                    Marshal.Copy((int[])(object)data.xyPicture, 0, ptr, data.xyPicture.Length);
+                }
+                img.Save($"D://Temp/xyPicture_{time}.png");
             }
         }
     }
