@@ -20,13 +20,41 @@
         <ColumnDefinition Width="Auto"/>
         <ColumnDefinition Width="Auto"/>
         <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="Auto"/>
       </Grid.ColumnDefinitions>
-      <TextBlock Text="{Binding Greeting}" Grid.Column="0" Grid.Row="0"/>
-      <TextBox x:Name="Band" Grid.Column="1" Text="{Binding Band}" Width="50"/>
-      <Button Grid.Column="2" Command="{Binding ChangeBand}">Render band</Button>
-    </Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="40"/>
+        <RowDefinition Height="40"/>
+      </Grid.RowDefinitions>
+      <!--<TextBlock Text="{Binding Greeting}" Grid.Column="0" Grid.Row="0"/>-->
+      <TextBlock Text="Band: " Grid.Column="0" Grid.Row="0" VerticalAlignment="Center" Margin="10"/>
+      <!--<TextBox x:Name="Band" Grid.Column="1" Text="{Binding Band}" Width="50"/>-->
+      <NumericUpDown Minimum="1" Value="{Binding Band}" Grid.Column="1" Width="75"/>
+      <Button Grid.Column="2" Grid.Row="0" Command="{Binding ChangeBand}">Render band</Button>
+      <Button Grid.Column="3" Grid.Row="0" Command="{Binding RenderCorrelation}">Render correlation map</Button>
+      <Button Grid.Column="4" Grid.Row="0" Command="{Binding RenderSobelMap}">Render sobel map</Button>
+      <Button Grid.Column="5" Grid.Row="0" Command="{Binding SaveImage}">Save picture</Button>
+      <Button Grid.Column="6" Grid.Row="0" Command="{Binding RenderHistogram}">Render Histogram </Button>
+      <Button Grid.Column="7" Grid.Row="0" Command="{Binding RenderBrightnessCalculationData}">Render Brightness Calculation Data</Button>
+      <Button Grid.Column="8" Grid.Row="0" Command="{Binding ConvertToByteRepresentation}">Render byte representation (30 band)</Button>
 
-    <Image Source="{Binding RenderImage}" Grid.Column="0" Grid.Row="1" Stretch="Uniform"/>
+      <Button Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" Command="{Binding RunWorkflow}">Start flow</Button>
+      <Button Grid.Column="2" Grid.Row="1" Command="{Binding RenderPearsonCorrelation}">Render Pearson Correlations</Button>
+    </Grid>
+    <Grid Grid.Column="0" Grid.Row="1" >
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <TextBlock Text="{Binding Description}" Grid.Column="0" Grid.Row="0" VerticalAlignment="Center" Margin="10"/>
+      <Image x:Name="ImageCtrl" Source="{Binding RenderImage}" Grid.Column="1" Grid.Row="0" Stretch="Uniform"/>
+    </Grid>    
   </Grid>
 
 </Window>

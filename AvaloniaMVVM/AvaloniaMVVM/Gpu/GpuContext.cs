@@ -18,9 +18,11 @@ namespace AvaloniaMVVM.Gpu
         public GpuContext()
         {
             Context = new Context();
-            Accelerator = Accelerator.Accelerators.Any(x => x.AcceleratorType == AcceleratorType.Cuda)
-                ? new CudaAccelerator(Context)
-                : (Accelerator)new CPUAccelerator(Context);
+            //Accelerator = Accelerator.Accelerators.Any(x => x.AcceleratorType == AcceleratorType.Cuda)
+            //    ? new CudaAccelerator(Context)
+            //    : (Accelerator)new CPUAccelerator(Context);
+            //Accelerator = new CPUAccelerator(Context);
+            Accelerator = new CudaAccelerator(Context);
         }
 
         public void Dispose()

@@ -9,6 +9,7 @@ namespace AvaloniaMVVM.Views
     public class MainWindow : Window
     {
         Image _img;
+        MainWindowViewModel context => (MainWindowViewModel)DataContext;
 
         public MainWindow()
         {
@@ -17,21 +18,32 @@ namespace AvaloniaMVVM.Views
             this.AttachDevTools();
 #endif
 
-            // _img = this.FindControl<Image>("ImageCtrl");
+            _img = this.FindControl<Image>("ImageCtrl");
+
 
             this.Closing += MainWindow_Closing;
+            this.Opened += MainWindow_Opened;
+        }
+
+        private void MainWindow_Opened(object sender, System.EventArgs e)
+        {
+            _img.PointerPressed += (s, ev) =>
+            {
+                var pos = ev.GetPosition(_img);
+                context.OnImagePress(pos, new Size(_img.Bounds.Width, _img.Bounds.Height));
+            };
         }
 
         private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            ((MainWindowViewModel)DataContext).Dispose();
+            context.Dispose();
         }
 
         private void InitializeComponent()
         {
             AvaloniaXamlLoader.Load(this);
 
-            
+
         }
     }
 }
