@@ -1,0 +1,42 @@
+***  Enter for every run:
+
+site_name      = Moffett Field
+location       = CA
+
+investigator   = Robert O. Green
+
+pilot_st_lat   = 37.533333
+pilot_end_lat  = 37.3
+
+pilot_st_long  = -122.083333
+pilot_end_long = -122
+
+pilot_st_date  = 080611
+pilot_end_date = 080611
+pilot_st_time  = 20 01 00
+pilot_end_time = 20 04 00
+
+type           = 1
+
+pilot_comments = 
+
+proc_comments  =
+
+***  Enter once per flight tape:
+
+ARC_flight_id   = 086027
+NASA_log       = 82004
+
+pilot          = D. Steele
+aircraft_id    = ER2 806
+
+takeoff_date   = 080611
+landing_date   = 080611
+takeoff_time   = 11 :0 .1
+landing_time   = 15 :2 .6
+
+deploymt_site  = DFRC
+
+***  Enter N below if OBC correction should NOT be performed:
+
+OBC_performed  =

@@ -1,1 +1,2 @@
 f080611t01p00r07rdn_c_sc01_ort_img filter=lfs diff=lfs merge=lfs -text
+f080611t01p00r07rdn_c_obs_ort filter=lfs diff=lfs merge=lfs -text

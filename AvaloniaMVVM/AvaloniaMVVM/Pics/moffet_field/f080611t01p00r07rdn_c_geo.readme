@@ -1,0 +1,210 @@
+=========================================================================
+
+AVIRIS Distribution Document 030217
+
+SEND COMMENTS TO rog@jpl.nasa.gov
+
+Additional informatin may be found on http://aviris.jpl.nasa.gov
+
+--------------------------------------------------------------------------
+
+All distibuted files are in a tar file.
+
+The following types of files should be found:
+
+PER FLIGHT LINE (i.e., occurs once per tar file/tape):
+   *.info    general information about the flight line,
+   *.gain     multiplication factors, radiance to 16-bit integer,
+   *.geo      geometric calibration data,
+   *.eng      engineering data,
+   *.nav      navigation data,
+   *.rcc      radiometric calibration coefficients,
+   *.readme   this file,
+   *.spc      spectral calibration file.
+   *.glt      geometric look up table
+   *.glt.hdr  geometric look up t
+   *.igm      input geometry file
+   *.igm.hdr  input geometry file header
+
+PER SCENE (i.e., occurs once or several times per tar file/tape):
+   *.img      calibrated AVIRIS radiance (image) data,
+   *.img.hdr  image format of the scene
+
+To list files (table-of-contents):
+   tar tvf "tar file name"  (on disc),
+   tar tvf "device name"    (on tape).
+
+To extract files:
+   tar xvf "tar file name" "extract file name"  (on disc),
+   tar xvf "device name" "extract file name"    (on tape).
+
+To get information about tar:
+   man tar
+
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+
+PER FLIGHT LINE
+
+----------------------------------------------------------------------------
+
+*.info    GENERAL INFORMATION ABOUT THE FLIGHT LINE
+
+File type:  ASCII.
+
+Information about the acquisition of the AVIRIS data.
+
+----------------------------------------------------------------------------
+
+*.gain     MULTIPLICATION FACTORS, RADIANCE TO 16-BIT INTEGER
+
+Contents:   Multiplication factors to store radiance as 16-bit integers.
+File type:  ASCII.
+Units:      none.
+Format:     Two columns:  - Multiplication factor,
+                          - Channel number.
+Use:        When each spectrum is divided by the factors in this file the
+            16-bit integers are converted to radiance in units of (micro-
+            watts/cm^2/nm/sr).
+
+----------------------------------------------------------------------------
+
+*.geo      GEOMETRIC CALIBRATION DATA
+
+Contents:   AVIRIS' spatial resolution on the ground.
+File type:  ASCII.
+Format:     Five columns:  - Spatial sampling interval (pixel center to center
+                             distance on the ground, in milliradians),
+                           - Spatial response function (the FWHM (in milli-
+                             radians) of the spatial response function (assumed
+                             to be Gaussian); this is a measure of the nominal
+                             pixel size),
+                           - Spatial sampling interval uncertainty (in milli-
+                             radians),
+                           - Spatial response function uncertainty (in milli-
+                             radians),
+                           - Channel number.
+
+----------------------------------------------------------------------------
+
+*.rcc      RADIOMETRIC CALIBRATION COEFFICIENTS
+
+Contents:   AVIRIS radiometric calibration coefficients and laboratory
+            calibration uncertainty.
+File type:  ASCII.
+Units:      microwatts per centimeter_squared per nanometer per steradian
+            per digitized_number.
+Format:     Three columns:  - Radiometric calibration coefficent,
+                            - Uncertainty in radiometric calibration coeff.,
+                            - Channel number.
+
+----------------------------------------------------------------------------
+
+*.readme   THIS FILE
+
+File type:  ASCII.
+
+----------------------------------------------------------------------------
+
+*.spc      SPECTRAL CALIBRATION FILE
+
+Contents:   AVIRIS spectral calibration.
+File type:  ASCII.
+Units:      nanometers.
+Format:     Five columns:  - Wavelength center position,
+                           - Full width at half maximum for equivalent
+                             gaussian,
+                           - Uncertainty in wavelength center position,
+                           - Uncertainty in FWHM for equivalent gaussian,
+                           - Channel number.
+
+
+----------------------------------------------------------------------------
+
+*.eng      ENGINEERING DATA
+
+File type:  ASCII
+
+This file contains the recorded engineering data
+
+----------------------------------------------------------------------------
+
+*.nav      NAVIGATION DATA
+
+File type:  ASCII.
+
+This file contains the recorded AVIRIS navigation data.
+
+----------------------------------------------------------------------------
+
+*.igm       INPUT GEOMETRY FILE
+
+File type:  Binary
+
+Contents:   Band 1 contain determined UTM Easting for each spatial element
+            in the original image.  Band 2 contains the UTM Northing.
+
+----------------------------------------------------------------------------
+
+*.igm.hdr   HEADER FILE FOR THE INPUT GEOMETRY FILE
+
+File type:  ASCII
+
+Contents:   File format description for the *.igm file.
+
+----------------------------------------------------------------------------
+
+*.glt       GEOMETRIC LOOK UP TABLE
+
+File type:  Binary
+
+Contents:   Band 1 original sample number for the georectified image location.
+            Band 2 original line number for the georectified image location.
+            A negative value indicates the georectified value has been 
+            nearest neighbor interpolated
+
+
+----------------------------------------------------------------------------
+
+*.glt.hdr   HEADER FILE FOR THE GEOMETRIC LOOK UP TABLE
+
+File type:  ASCII
+
+Contents:   File format description for the *.glt file.
+
+=========================================================================
+
+PER SCENE (2048 AVIRIS lines of data)
+
+----------------------------------------------------------------------------
+
+*.img      CALIBRATED AVIRIS RADIANCE (IMAGE) DATA
+
+Contents:   AVIRIS calibrated radiance multipled by the gain and stored as
+            16-bit integers.
+
+File type:  BINARY 16-bit signed integer IEEE.
+
+Units:      gain times (microwatts per centimeter_squared per nanometer per
+            steradian).
+
+Format:     Band interleaved by pixel (channel, sample, line) with dimensions
+            (224, ns, nl).  
+--------------------------------------------------------------------------------
+
+*.img.hdr   HEADER FILE FOR CALIBRATED AVIRIS RADIANCE (IMAGE) DATA
+
+Contents:   Format of each AVIRIS calibrated radiance scene.  This file contains 
+            the number of lines, samples, channel, integer format, etc.
+
+File type:  ASCII
+
+=========================================================================
+KNOWN ARTIFACTS
+
+1)  There is a slew effect in the AVIRIS detector array readout.  Slew 
+expresses itself as a slight shift in the IFOV when moving from regions of 
+very different brightnesses.
+
+2) In 2002, the bad detector at channel 77 has been interpolated.
+=========================================================================
