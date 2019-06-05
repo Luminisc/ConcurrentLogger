@@ -1,18 +1,14 @@
-﻿using Avalonia.Media.Imaging;
+﻿using Avalonia;
+using Avalonia.Media.Imaging;
+using AvaloniaMVVM.Gpu;
+using AvaloniaMVVM.Kernels;
 using ILGPU;
 using ILGPU.Runtime;
 using OSGeo.GDAL;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using AvaloniaMVVM.Kernels;
 using System.Runtime.InteropServices;
-using ILGPU.Runtime.Cuda;
-using ILGPU.Runtime.CPU;
-using AvaloniaMVVM.Gpu;
-using Avalonia;
 
 namespace AvaloniaMVVM.DatasetWrapper
 {
@@ -173,34 +169,36 @@ namespace AvaloniaMVVM.DatasetWrapper
             }
         }
 
-        public void RenderPearsonCorrelation(ref WriteableBitmap bmp)
+        public void RenderPearsonCorrelation(ref WriteableBitmap bmp, byte lowThreshold = 0, byte highThreshold = 0)
         {
-            var data = CalculationWrappers.CalculatePearsonCorrelation(dataset_v_byte);
+            var data = CalculationWrappers.CalculatePearsonCorrelation(dataset_v_byte, lowThreshold, highThreshold);
 
-            using (var img = new WriteableBitmap(new PixelSize(dataset_v_byte.Width, dataset_v_byte.Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888))
+            if (highThreshold == 0 || lowThreshold == 0)
             {
-                string time = DateTime.Now.ToFileTime().ToString();
-                using (var buf = img.Lock())
+                using (var img = new WriteableBitmap(new PixelSize(dataset_v_byte.Width, dataset_v_byte.Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888))
                 {
-                    IntPtr ptr = buf.Address;
-                    Marshal.Copy((int[])(object)data.xCorrelation, 0, ptr, data.xCorrelation.Length);
+                    string time = DateTime.Now.ToFileTime().ToString();
+                    using (var buf = img.Lock())
+                    {
+                        IntPtr ptr = buf.Address;
+                        Marshal.Copy((int[])(object)data.xCorrelation, 0, ptr, data.xCorrelation.Length);
+                    }
+                    img.Save($"D://Temp/xCorrelation_{time}.png");
+                    using (var buf = img.Lock())
+                    {
+                        IntPtr ptr = buf.Address;
+                        Marshal.Copy((int[])(object)data.yCorrelation, 0, ptr, data.yCorrelation.Length);
+                    }
+                    img.Save($"D://Temp/yCorrelation_{time}.png");
+                    using (var buf = img.Lock())
+                    {
+                        IntPtr ptr = buf.Address;
+                        Marshal.Copy((int[])(object)data.xyCorrelation, 0, ptr, data.xyCorrelation.Length);
+                    }
+                    img.Save($"D://Temp/xyCorrelation_{time}.png");
                 }
-                img.Save($"D://Temp/xCorrelation_{time}.png");
-                using (var buf = img.Lock())
-                {
-                    IntPtr ptr = buf.Address;
-                    Marshal.Copy((int[])(object)data.yCorrelation, 0, ptr, data.yCorrelation.Length);
-                }
-                img.Save($"D://Temp/yCorrelation_{time}.png");
-                using (var buf = img.Lock())
-                {
-                    IntPtr ptr = buf.Address;
-                    Marshal.Copy((int[])(object)data.xyCorrelation, 0, ptr, data.xyCorrelation.Length);
-                }
-                img.Save($"D://Temp/xyCorrelation_{time}.png");
-
             }
-
+            
             using (var buf = bmp.Lock())
             {
                 IntPtr ptr = buf.Address;

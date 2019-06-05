@@ -219,7 +219,7 @@ namespace AvaloniaMVVM.Kernels
             return (outputBuf, buff);
         }
 
-        public static CorrelationData CalculatePearsonCorrelation(ArrayView3D<byte> imageView)
+        public static CorrelationData CalculatePearsonCorrelation(ArrayView3D<byte> imageView, byte lowThreshold = 0, byte highThreshold = 0)
         {
             var pearsonKernel = GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index2, ArrayView3D<float>, ArrayView3D<byte>>(CorrelationKernels.CorrelationMap);
             var normilizeKernel = GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<float>, float>(Kernels.Normalize);
