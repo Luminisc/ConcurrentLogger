@@ -193,7 +193,7 @@ namespace AvaloniaMVVM.DatasetWrapper
                     IntPtr ptr = buf.Address;
                     Marshal.Copy((int[])(object)data.xyCorrelation, 0, ptr, data.xyCorrelation.Length);
                 }
-                img.Save($"D://Temp/xyCorrelation_{time}.png");
+                img.Save($"D://Temp/PearsonCorrelation_{highThreshold}Threshold_{time}.png");
             }
 
             using (var buf = bmp.Lock())
@@ -228,12 +228,19 @@ namespace AvaloniaMVVM.DatasetWrapper
                 //    Marshal.Copy((int[])(object)data.yPicture, 0, ptr, data.yPicture.Length);
                 //}
                 //img.Save($"D://Temp/yPicture_{time}.png");
+                // SignatureLengthEdges_short_100bands_Clamped_normalized
+                System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                sb.Append($"SignatureLengthEdges_short_{Depth}Bands_Clamped");
+                if (normalize)
+                    sb.Append("_clamped");
+                sb.Append($"_{time}.png");
+
                 using (var buf = img.Lock())
                 {
                     IntPtr ptr = buf.Address;
                     Marshal.Copy((int[])(object)data.xyPicture, 0, ptr, data.xyPicture.Length);
                 }
-                img.Save($"D://Temp/xyPicture_{time}.png");
+                img.Save($"D://Temp/{sb.ToString()}");
             }
         }
 
@@ -250,24 +257,30 @@ namespace AvaloniaMVVM.DatasetWrapper
             using (var img = new WriteableBitmap(new PixelSize(Width, Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888))
             {
                 string time = DateTime.Now.ToFileTime().ToString();
-                using (var buf = img.Lock())
-                {
-                    IntPtr ptr = buf.Address;
-                    Marshal.Copy((int[])(object)data.xPicture, 0, ptr, data.xPicture.Length);
-                }
-                img.Save($"D://Temp/xPicture_{time}.png");
-                using (var buf = img.Lock())
-                {
-                    IntPtr ptr = buf.Address;
-                    Marshal.Copy((int[])(object)data.yPicture, 0, ptr, data.yPicture.Length);
-                }
-                img.Save($"D://Temp/yPicture_{time}.png");
+                //using (var buf = img.Lock())
+                //{
+                //    IntPtr ptr = buf.Address;
+                //    Marshal.Copy((int[])(object)data.xPicture, 0, ptr, data.xPicture.Length);
+                //}
+                //img.Save($"D://Temp/xPicture_{time}.png");
+                //using (var buf = img.Lock())
+                //{
+                //    IntPtr ptr = buf.Address;
+                //    Marshal.Copy((int[])(object)data.yPicture, 0, ptr, data.yPicture.Length);
+                //}
+                //img.Save($"D://Temp/yPicture_{time}.png");
+                System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                sb.Append($"SignatureLengthEdges_byte_{Depth}Bands");
+                if (normalize)
+                    sb.Append("_clamped");
+                sb.Append($"_{time}.png");
+
                 using (var buf = img.Lock())
                 {
                     IntPtr ptr = buf.Address;
                     Marshal.Copy((int[])(object)data.xyPicture, 0, ptr, data.xyPicture.Length);
                 }
-                img.Save($"D://Temp/xyPicture_{time}.png");
+                img.Save($"D://Temp/{sb.ToString()}");
             }
         }
     }

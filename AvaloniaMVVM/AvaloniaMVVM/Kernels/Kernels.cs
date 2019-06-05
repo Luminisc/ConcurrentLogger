@@ -23,40 +23,45 @@ namespace AvaloniaMVVM.Kernels
         }
 
         #region Correlation
-        // not correct!
-        public static void PearsonCorrelation(Index index, VariableView<double> result, ArrayView<short> bufIn1, ArrayView<short> bufIn2)
-        {
-            double sx = 0.0;
-            double sy = 0.0;
-            double sxx = 0.0;
-            double syy = 0.0;
-            double sxy = 0.0;
-
-            int n = 0;
-
-            var minLength = Math.Min(bufIn1.Length, bufIn2.Length);
-            for (int i = 0; i < minLength; i++)
-            {
-                short x = bufIn1[i];
-                short y = bufIn2[i];
-
-                n += 1;
-                sx += x;
-                sy += y;
-                sxx += x * x;
-                syy += y * y;
-                sxy += x * y;
-            }
-
-            double covariation = sxy / n - sx * sy / n / n;
-            double sigmaX = Math.Sqrt(sxx / n - sx * sx / n / n);
-            double sigmaY = Math.Sqrt(syy / n - sy * sy / n / n);
-
-            result.Value = covariation / (sigmaX * sigmaY);
-        }
-
         // Correct one!
         public static double PearsonCorrelation(ArrayView3D<byte> bufIn, Index2 pixel1, Index2 pixel2)
+        {
+            var minLength = bufIn.Depth;
+            int sum1 = 0, sum2 = 0;
+            float mean1 = 0, mean2 = 0;
+
+            for (int i = 0; i < minLength; i++)
+            {
+                byte x = bufIn[pixel1.X, pixel1.Y, i];
+                byte y = bufIn[pixel2.X, pixel2.Y, i];
+                sum1 += x;
+                sum2 += y;
+            }
+            mean1 = sum1 / minLength;
+            mean2 = sum2 / minLength;
+
+            float covariation = 0;
+            float xDerSqrSum = 0;
+            float yDerSqrSum = 0;
+
+            for (int i = 0; i < minLength; i++)
+            {
+                byte x = bufIn[pixel1.X, pixel1.Y, i];
+                byte y = bufIn[pixel2.X, pixel2.Y, i];
+
+                float xDer = x - mean1;
+                float yDer = y - mean2;
+
+                covariation += xDer * yDer;
+                xDerSqrSum += xDer * xDer;
+                yDerSqrSum += yDer * yDer;
+
+            }
+
+            return covariation / XMath.Sqrt(xDerSqrSum * yDerSqrSum);
+        }
+
+        public static double PearsonCorrelation(ArrayView3D<short> bufIn, Index2 pixel1, Index2 pixel2)
         {
             var minLength = bufIn.Depth;
             int sum1 = 0, sum2 = 0;
@@ -138,11 +143,10 @@ namespace AvaloniaMVVM.Kernels
                 return;
             }
 
-            var a = bufIn1.GetSubView(new Index3(index.X, index.Y, 0), new Index3(1, 1, bufIn1.Depth)).AsLinearView();
-            var b = bufIn1.GetSubView(new Index3(index.X + 1, index.Y, 0), new Index3(1, 1, bufIn1.Depth)).AsLinearView();
-            VariableView<double> res = result.GetVariableView(index);
-            PearsonCorrelation(1, res, a, b);
-            result[index] = res.Value;
+            var index1 = new Index2(index.X, index.Y);
+            var index2 = new Index2(index.X + 1, index.Y);
+
+            result[index] = PearsonCorrelation(bufIn1, index1, index2);
         }
 
         public static void VerticalCorrelationMap(Index2 index, ArrayView2D<double> result, ArrayView3D<short> bufIn1)
@@ -153,11 +157,10 @@ namespace AvaloniaMVVM.Kernels
                 return;
             }
 
-            var a = bufIn1.GetSubView(new Index3(index.X, index.Y, 0), new Index3(1, 1, bufIn1.Depth)).AsLinearView();
-            var b = bufIn1.GetSubView(new Index3(index.X, index.Y + 1, 0), new Index3(1, 1, bufIn1.Depth)).AsLinearView();
-            VariableView<double> res = result.GetVariableView(index);
-            PearsonCorrelation(1, res, a, b);
-            result[index] = res.Value;
+            var index1 = new Index2(index.X, index.Y);
+            var index2 = new Index2(index.X, index.Y + 1);
+
+            result[index] = PearsonCorrelation(bufIn1, index1, index2);
         }
 
         public static void DiagLeftBottomCorrelationMap(Index2 index, ArrayView2D<double> result, ArrayView3D<short> bufIn1)
@@ -168,11 +171,10 @@ namespace AvaloniaMVVM.Kernels
                 return;
             }
 
-            var a = bufIn1.GetSubView(new Index3(index.X, index.Y, 0), new Index3(1, 1, bufIn1.Depth)).AsLinearView();
-            var b = bufIn1.GetSubView(new Index3(index.X + 1, index.Y + 1, 0), new Index3(1, 1, bufIn1.Depth)).AsLinearView();
-            VariableView<double> res = result.GetVariableView(index);
-            PearsonCorrelation(1, res, a, b);
-            result[index] = res.Value;
+            var index1 = new Index2(index.X, index.Y);
+            var index2 = new Index2(index.X + 1, index.Y + 1);
+
+            result[index] = PearsonCorrelation(bufIn1, index1, index2);
         }
 
         public static void DiagRightBottomCorrelationMap(Index2 index, ArrayView2D<double> result, ArrayView3D<short> bufIn1)
@@ -183,11 +185,10 @@ namespace AvaloniaMVVM.Kernels
                 return;
             }
 
-            var a = bufIn1.GetSubView(new Index3(index.X + 1, index.Y, 0), new Index3(1, 1, bufIn1.Depth)).AsLinearView();
-            var b = bufIn1.GetSubView(new Index3(index.X, index.Y + 1, 0), new Index3(1, 1, bufIn1.Depth)).AsLinearView();
-            VariableView<double> res = result.GetVariableView(index);
-            PearsonCorrelation(1, res, a, b);
-            result[index] = res.Value;
+            var index1 = new Index2(index.X + 1, index.Y);
+            var index2 = new Index2(index.X, index.Y + 1);
+
+            result[index] = PearsonCorrelation(bufIn1, index1, index2);
         }
 
         public static void BuildCorrelationMap(Index2 index, ArrayView2D<double> result,
@@ -206,6 +207,8 @@ namespace AvaloniaMVVM.Kernels
             if (r > 1) r = 1;
 
             rad = (byte)(255 * r);
+            if (rad == 255)
+                rad = 254; // because there are issue with saving of white pixels
 
             result[index] = (uint)(rad + (rad << 8) + (rad << 16) + (255 << 24));
         }
