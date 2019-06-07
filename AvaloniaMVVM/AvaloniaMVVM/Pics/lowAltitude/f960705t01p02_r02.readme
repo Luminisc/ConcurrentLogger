@@ -1,0 +1,527 @@
+=========================================================================
+
+AVIRIS Distribution Document
+970710
+
+THIS IS A NEW FORMAT FOR AVIRIS.
+SEND COMMENTS TO rog@gomez.jpl.nasa.gov
+
+All files are in a tar file.
+
+The following types of files should be found:
+
+PER FLIGHT LINE (i.e., occurs once per tar file/tape):
+   *.avhdr    general information about the flight line,
+   *.brz      browse image of the complete flight line,
+   *.gain     multiplication factors, radiance to 16-bit integer,
+   *.geo      geometric calibration data,
+   *.log      log information of the distribution processing,
+   *.occ      on-board calibration correction coefficients,
+   *.post     post flight line on-board calibrator data,
+   *.pre      pre flight line on-board calibrator data,
+   *.rcc      radiometric calibration coefficients,
+   *.readme   this file,
+   *.spc      spectral calibration file.
+
+PER SCENE (i.e., occurs once or several times per tar file/tape):
+   *.drk1   first part of summed dark signal,
+   *.drk2   second part of summed dark signal,
+   *.eng    engineering data,
+   *.nav    navigation data,
+   *.img    calibrated AVIRIS radiance (image) data,
+
+To list files (table-of-contents):
+   tar tvf "tar file name"  (on disc),
+   tar tvf "device name"    (on tape).
+
+To extract files:
+   tar xvf "tar file name" "extract file name"  (on disc),
+   tar xvf "device name" "extract file name"    (on tape).
+
+To get information about tar:
+   man tar
+
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+
+PER FLIGHT LINE
+
+----------------------------------------------------------------------------
+
+*.avhdr    GENERAL INFORMATION ABOUT THE FLIGHT LINE
+
+File type:  ASCII.
+
+Information about the acquisition of the AVIRIS data.
+
+----------------------------------------------------------------------------
+
+*.brz      BROWSE IMAGE OF THE AVIRIS FLIGHT LINE
+
+Contents:   Four channels of AVIRIS data (channels 10, 33, 128, and 192).
+File type:  BINARY 16-bit signed integer IEEE.
+Units:      AVIRIS digitized numbers.
+Format:     Band interleaved by pixel (channel, sample, line) with dimensions
+            of (4, 614, NL), where NL = number of lines.  To calculate the
+            number of lines divide the size of the file by 4912 bytes per
+            line.
+
+----------------------------------------------------------------------------
+
+*.gain     MULTIPLICATION FACTORS, RADIANCE TO 16-BIT INTEGER
+
+Contents:   Multiplication factors to store radiance as 16-bit integers.
+File type:  ASCII.
+Units:      none.
+Format:     Two columns:  - Multiplication factor,
+                          - Channel number.
+Use:        When each spectrum is divided by the factors in this file the
+            16-bit integers are converted to radiance in units of (micro-
+            watts/cm^2/nm/sr).
+
+----------------------------------------------------------------------------
+
+*.geo      GEOMETRIC CALIBRATION DATA
+
+Contents:   AVIRIS' spatial resolution on the ground.
+File type:  ASCII.
+Format:     Five columns:  - Spatial sampling interval (pixel center to center
+                             distance on the ground, in milliradians),
+                           - Spatial response function (the FWHM (in milli-
+                             radians) of the spatial response function (assumed
+                             to be Gaussian); this is a measure of the nominal
+                             pixel size),
+                           - Spatial sampling interval uncertainty (in milli-
+                             radians),
+                           - Spatial response function uncertainty (in milli-
+                             radians),
+                           - Channel number.
+
+----------------------------------------------------------------------------
+
+*.log      LOG INFORMATION ASSOCIATED WITH DISTRIBUTION PROCESSING
+
+Contents:   Date the AVIRIS data were processed for distribution,
+            Number of lines in the flight line,
+            Number of scenes in the flight line, and
+            Number of lines in the last scene.
+File type:  ASCII.
+
+----------------------------------------------------------------------------
+
+*.occ      ON-BOARD CALIBRATION CORRECTION COEFFICIENTS
+
+Contents:   Calculated on-board calibration coefficients used in radiometric
+            calibration of the data.
+File type:  ASCII.
+Units:      none.
+Format:     Two columns:  - On-board calibration correction coefficient,
+                          - Channel number.
+Use:        This is the ratio between the on-board calibrator signal at the
+            time of AVIRIS calibration and the on-board calibrator signal at
+            the time of the flight line acquisition.
+
+----------------------------------------------------------------------------
+
+*.post     POST FLIGHT LINE ON-BOARD CALIBRATOR DATA
+
+Contents:   AVIRIS data measured from the on-board calibrator after the flight
+            line.
+File type:  BINARY 16-bit signed integer IEEE.
+Units:      AVIRIS digitized numbers.
+Format:     Band interleaved by pixel (channel, sample, line) with dimensions
+            of (224, 614, 8).
+
+The 8 lines correspond to:  - Dark signal one side of shutter,
+                            - Dark signal other side of shutter,
+                            - Spectral filter A one side of shutter,
+                            - Spectral filter A other side of shutter,
+                            - Spectral filter B one side of shutter,
+                            - Spectral filter B other side of shutter,
+                            - High signal one side of shutter,
+                            - High signal other side of shutter.
+
+Please note that this file may be of size 0 bytes, i.e., containing no data.
+This can happen when a flight line is too long to be contained in one file.
+Please contact the AVIRIS Data Facility should this be the case (assuming
+this data set is needed).
+
+----------------------------------------------------------------------------
+
+*.pre      PRE FLIGHT LINE ON-BOARD CALIBRATOR DATA
+
+Contents:   AVIRIS data measured from the on-board calibrator before the
+            flight line.
+File type:  BINARY 16-bit signed integer IEEE.
+Units:      AVIRIS digitized numbers.
+Format:     Band interleaved by pixel (channel, sample, line) with dimensions
+            of (224, 614, 8).
+
+The 8 lines correspond to:  - Dark signal one side of shutter,
+                            - Dark signal other side of shutter,
+                            - Spectral filter A one side of shutter,
+                            - Spectral filter A other side of shutter,
+                            - Spectral filter B one side of shutter,
+                            - Spectral filter B other side of shutter,
+                            - High signal one side of shutter,
+                            - High signal other side of shutter.
+
+----------------------------------------------------------------------------
+
+*.rcc      RADIOMETRIC CALIBRATION COEFFICIENTS
+
+Contents:   AVIRIS radiometric calibration coefficients and laboratory
+            calibration uncertainty.
+File type:  ASCII.
+Units:      microwatts per centimeter_squared per nanometer per steradian
+            per digitized_number.
+Format:     Three columns:  - Radiometric calibration coefficent,
+                            - Uncertainty in radiometric calibration coeff.,
+                            - Channel number.
+
+----------------------------------------------------------------------------
+
+*.readme   THIS FILE
+
+File type:  ASCII.
+
+----------------------------------------------------------------------------
+
+*.spc      SPECTRAL CALIBRATION FILE
+
+Contents:   AVIRIS spectral calibration.
+File type:  ASCII.
+Units:      nanometers.
+Format:     Five columns:  - Wavelength center position,
+                           - Full width at half maximum for equivalent
+                             gaussian,
+                           - Uncertainty in wavelength center position,
+                           - Uncertainty in FWHM for equivalent gaussian,
+                           - Channel number.
+
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+
+PER SCENE (512 AVIRIS lines of data)
+
+----------------------------------------------------------------------------
+
+*.drk1     FIRST PART OF SUMMED DARK SIGNAL
+
+Contents:   First part of summed dark signal (most significant 12 bits).
+File type:  BINARY 16-bit signed integer IEEE.
+Units:      digitized numbers * 4096.
+Format:     Band interleaved by pixel (channel, sample, line) with dimensions
+            of (224, 1, 512). The last scene may be less than 512 lines.  To
+            calculate the number of lines divide the file size by 448 bytes
+            per line.
+
+----------------------------------------------------------------------------
+
+*.drk2     SECOND PART OF SUMMED DARK SIGNAL
+
+Contents:   Second part of summed dark signal (least significant 12 bits).
+File type:  BINARY 16-bit signed integer IEEE.
+Units:      digitized numbers.
+Format:     Band interleaved by pixel (channel, sample, line) with dimensions
+            of (224, 1, 512). The last scene may be less than 512 lines.  To
+            calculate the number of lines divide the file size by 448 bytes
+            per line.
+
+----------------------------------------------------------------------------
+
+*.eng      ENGINEERING DATA
+
+File type:  BINARY 16-bit signed integer IEEE.
+
+ENGINEERING MINOR FRAME 2 FORMAT (12-BIT WORDS)
+
+WORD GROUP         MEASUREMENT               RANGE    LSB/1 DN UNITS REFR.RATE
+
+1    Temperature   Detector 1                65 to 91   0.102     K    0.2Hz
+2    Temperature   Detector 2                65 to 91   0.102     K    0.2Hz
+3    Temperature   Detector 3                65 to 91   0.102     K    0.2Hz
+4    Temperature   Detector 4                65 to 91   0.102     K    0.2Hz
+5    Temperature   Spectrometer 1           -30 to +60  0.35      C    0.2Hz
+6    Temperature   Spectrometer 2           -30 to +60  0.35      C    0.2Hz
+7    Temperature   Spectrometer 3           -30 to +60  0.35      C    0.2Hz
+8    Temperature   Spectrometer 4           -30 to +60  0.35      C    0.2Hz
+9    Temperature   Scanner optics mount     -10 to +80  0.35      C    0.2Hz
+10   Temperature   Scan motor               -30 to +60  0.35      C    0.2Hz
+11   Temperature   Analog electronics pkg.  -30 to +60  0.35      C    0.2Hz
+12   Temperature   Digital electronics pkg. -30 to +60  0.35      C    0.2Hz
+13   Temperature   Gnrl. purpose pwr supply -30 to +60  0.35      C    0.2Hz
+14   Temperature   FPA/Signal chain pwr sup.-30 to +60  0.35      C    0.2Hz
+15   Temperature   Timing generator pwr sup.-30 to +60  0.35      C    0.2Hz
+16   Temperature   VLDS scanner             -30 to +60  0.35      C    0.2Hz
+17   Temperature   VLDS transport           -30 to +60  0.35      C    0.2Hz
+18   Temperature   VLDS power supply        -30 to +60  0.35      C    0.2Hz
+19   Temperature   On-board calibrator      -30 to +60  0.35      C    0.2Hz
+20   Voltage       General purpose +5V      2.5 to 7.5  0.02      V    0.2Hz
+21   Voltage       General purpose +8V        4 to 11   0.027     V    0.2Hz
+22   Voltage       General purpose +20V      15 to 25   0.039     V    0.2Hz
+23   Voltage       General purpose -20V     -26 to -12  0.055     V    0.2Hz
+24   Voltage       FPA/Signal chain +5V     2.5 to 7.5  0.02      V    0.2Hz
+25   Voltage       FPA/Signal chain +8V       4 to 11   0.027     V    0.2Hz
+26   Voltage       FPA/Signal chain +20V     15 to 25   0.039     V    0.2Hz
+27   Voltage       FPA/Signal chain -20V    -26 to -12  0.055     V    0.2Hz
+28   Voltage       Timing generator +5V     2.5 to 7.5  0.02      V    0.2Hz
+29   Voltage       AC bus vltg 115V/400Hz  51.4 to 135  0.33      Vrms 0.2Hz
+30   Voltage       AC bus voltage +28V       18 to 32   0.055     V    0.2Hz
+31   Spare
+32   Spare
+33   Spare
+34   Spare
+35   Spare
+36   Spare
+37   Spare
+38   Spare
+39   Spare         Low rate sense               TBD     TBD      TBD   0.2Hz
+40   Spare         Low rate sense               TBD     TBD      TBD   0.2Hz
+41   Spare         Low rate sense               TBD     TBD      TBD   0.2Hz
+42   Spare         Low rate sense               TBD     TBD      TBD   0.2Hz
+43   Spare         High rate sense              TBD     TBD      TBD   12Hz
+44   Spare         High rate sense              TBD     TBD      TBD   12Hz
+45   Spare         High rate sense              TBD     TBD      TBD   12Hz
+46   Voltage       Calibration lamp        0.000-8.192  0.002     V    12Hz
+47   Current       Calibration lamp       1.8000-2.2096 4.00E-04  A    12Hz
+48   Scan mirror   Linearity count rdng. 1  0 to 5427.2 10.6     uSec  12Hz
+49   Scan mirror   Linearity count rdng. 2  0 to 5427.2 10.6     uSec  12Hz
+50   Scan mirror   Linearity count rdng. 3  0 to 5427.2 10.6     uSec  12Hz
+51   Scan mirror   Linearity count rdng. 4  0 to 5427.2 10.6     uSec  12Hz
+52   Scan mirror   Linearity count rdng. 5  0 to 5427.2 10.6     uSec  12Hz
+53   Scan mirror   Linearity count rdng. 6  0 to 5427.2 10.6     uSec  12Hz
+54   Scan mirror   Linearity count rdng. 7  0 to 5427.2 10.6     uSec  12Hz
+55   Scan mirror   Linearity count rdng. 8  0 to 5427.2 10.6     uSec  12Hz
+56   Scan mirror   Linearity count rdng. 9  0 to 5427.2 10.6     uSec  12Hz
+57   Scan mirror   Linearity count rdng. 10 0 to 5427.2 10.6     uSec  12Hz
+58   Scan mirror   Linearity count rdng. 11 0 to 5427.2 10.6     uSec  12Hz
+59   Instr. gyro   Roll reading 1          -1.5 to +1.5 0.012    deg   12Hz
+60   Instr. gyro   Roll reading 2          -1.5 to +1.5 0.012    deg   12Hz
+61   Instr. gyro   Roll reading 3          -1.5 to +1.5 0.012    deg   12Hz
+62   Instr. gyro   Roll reading 4          -1.5 to +1.5 0.012    deg   12Hz
+63   Instr. gyro   Roll reading 5          -1.5 to +1.5 0.012    deg   12Hz
+64   Instr. gyro   Roll reading 6          -1.5 to +1.5 0.012    deg   12Hz
+65   Instr. gyro   Roll reading 7          -1.5 to +1.5 0.012    deg   12Hz
+66   Instr. gyro   Roll reading 8          -1.5 to +1.5 0.012    deg   12Hz
+67   Instr. gyro   Roll reading 9          -1.5 to +1.5 0.012    deg   12Hz
+68   Instr. gyro   Roll reading 10         -1.5 to +1.5 0.012    deg   12Hz
+69   Instr. gyro   Roll reading 11         -1.5 to +1.5 0.012    deg   12Hz
+70   Instr. gyro   Pitch reading 1         -1.5 to +1.5 0.012    deg   12Hz
+71   Instr. gyro   Pitch reading 2         -1.5 to +1.5 0.012    deg   12Hz
+72   Instr. gyro   Pitch reading 3         -1.5 to +1.5 0.012    deg   12Hz
+73   Instr. gyro   Pitch reading 4         -1.5 to +1.5 0.012    deg   12Hz
+74   Instr. gyro   Pitch reading 5         -1.5 to +1.5 0.012    deg   12Hz
+75   Instr. gyro   Pitch reading 6         -1.5 to +1.5 0.012    deg   12Hz
+76   Instr. gyro   Pitch reading 7         -1.5 to +1.5 0.012    deg   12Hz
+77   Instr. gyro   Pitch reading 8         -1.5 to +1.5 0.012    deg   12Hz
+78   Instr. gyro   Pitch reading 9         -1.5 to +1.5 0.012    deg   12Hz
+79   Instr. gyro   Pitch reading 10        -1.5 to +1.5 0.012    deg   12Hz
+80   Instr. gyro   Pitch reading 11        -1.5 to +1.5 0.012    deg   12Hz
+81   Reserved                              -1.5 to +1.5 0.012    deg
+82   Reserved                              -1.5 to +1.5 0.012    deg
+83   Reserved                              -1.5 to +1.5 0.012    deg
+84   Reserved                              -1.5 to +1.5 0.012    deg
+85   Reserved                              -1.5 to +1.5 0.012    deg
+86   Reserved                              -1.5 to +1.5 0.012    deg
+87   Reserved                              -1.5 to +1.5 0.012    deg
+88   Reserved                              -1.5 to +1.5 0.012    deg
+89   Reserved                              -1.5 to +1.5 0.012    deg
+90   Reserved                              -1.5 to +1.5 0.012    deg
+91   Reserved                              -1.5 to +1.5 0.012    deg
+92   Reserved                                   TBD     TBD      TBD
+93   Reserved                                   TBD     TBD      TBD
+94   Reserved                                   TBD     TBD      TBD
+95   Reserved                                   TBD     TBD      TBD
+96   Reserved                                   TBD     TBD      TBD
+97   Reserved                                   TBD     TBD      TBD
+98   Reserved                                   TBD     TBD      TBD
+99   Reserved                                   TBD     TBD      TBD
+100  Reserved                                   TBD     TBD      TBD
+101  Reserved                                   TBD     TBD      TBD
+102  Reserved                                   TBD     TBD      TBD
+103  Reserved                                   TBD     TBD      TBD
+104  Reserved                                   TBD     TBD      TBD
+105  Reserved                                   TBD     TBD      TBD
+106  Reserved                                   TBD     TBD      TBD
+107  Reserved                                   TBD     TBD      TBD
+108  Reserved                                   TBD     TBD      TBD
+109  Reserved                                   TBD     TBD      TBD
+110  Reserved                                   TBD     TBD      TBD
+111  Reserved                                   TBD     TBD      TBD
+112  Reserved                                   TBD     TBD      TBD
+113  Reserved                                   TBD     TBD      TBD
+114  Spare
+115  Spare
+116  Spare
+117  Spare
+118  Spare
+119  Spare
+120  Spare
+121  Spare
+122  Spare
+123  Spare
+124  Spare
+125  F/W status    (No. of dark sums) - 1    00 to FF (hex)            0Hz
+126  F/W status    Digital box 2 status      00 to FF (hex)            0Hz
+127  Start of run  Year                      00 to 99 (BCD)            0Hz
+128  Start of run  Month                     01 to 12 (BCD)            0Hz
+129  Start of run  Day                       01 to 31 (BCD)            0Hz
+130  Start of run  Hours                     00 to 23 (BCD)            0Hz
+131  Start of run  Minutes                   00 to 59 (BCD)            0Hz
+132  Start of run  Seconds                   00 to 59 (BCD)            0Hz
+133  Scan timerMSB 94.33kHz cntr - 10.6 uSec 00 to FF (hex) 10.6 uSec  12Hz
+134  Scan timerLSB 94.33kHz cntr - 10.6 uSec 00 to FF (hex) 10.6 uSec  12Hz
+135  Last P.O.R.   Year                      00 to 99 (BCD)            0Hz
+136  Last P.O.R.   Month                     01 to 12 (BCD)            0Hz
+137  Last P.O.R.   Day                       01 to 31 (BCD)            0Hz
+138  Last P.O.R.   Hours                     00 to 23 (BCD)            0Hz
+139  Last P.O.R.   Minutes                   00 to 59 (BCD)            0Hz
+140  Last P.O.R.   Seconds                   00 to 59 (BCD)            0Hz
+141  H/W status    Mechanism pos, misc status00 to FF (hex)            12Hz
+142  F/W focus     Foreoptics focus position 00 to FF (hex)            12Hz
+143  Real-time clock  Spare                                            12Hz
+144  Real-time clock  CSR                    00 to FF (hex)            12Hz
+145  Real-time clock  Year                   00 to 99 (BCD)            12Hz
+146  Real-time clock  Month                  01 to 12 (BCD)            12Hz
+147  Real-time clock  Day                    01 to 31 (BCD)            12Hz
+148  Real-time clock  Hours                  00 to 23 (BCD)            12Hz
+149  Real-time clock  Minutes                00 to 59 (BCD)            12Hz
+150  Real-time clock  Seconds                00 to 59 (BCD)            12Hz
+151  VLDS          Spare
+152  VLDS          Spare
+153  VLDS          Main loop counter - MSB   00 to FF (hex)            12Hz
+154  VLDS          Main loop counter - LSB   00 to FF (hex)            12Hz
+155  VLDS          Post mortem buf chksumMSB 00 to FF (hex)            12Hz
+156  VLDS          Post mortem buf chksumLSB 00 to FF (hex)            12Hz
+157  VLDS          Post mortem event count   0 to A (hex)              12Hz
+158  VLDS          Status register 23        00 to FF (hex)            12Hz
+159  VLDS          Status register 22        00 to FF (hex)            12Hz
+160  VLDS          Status register 21        00 to FF (hex)            12Hz
+161  VLDS          Status register 20        00 to FF (hex)            12Hz
+162  VLDS          Status register 19        00 to FF (hex)            12Hz
+163  VLDS          Status register 18        00 to FF (hex)            12Hz
+164  VLDS          Status register 17        00 to FF (hex)            12Hz
+165  VLDS          Status register 16        00 to FF (hex)            12Hz
+166  VLDS          Status register 15        00 to FF (hex)            12Hz
+167  VLDS          Status register 14        00 to FF (hex)            12Hz
+168  VLDS          Status register 13        00 to FF (hex)            12Hz
+169  VLDS          Status register 12        00 to FF (hex)            12Hz
+170  VLDS          Status register 11        00 to FF (hex)            12Hz
+171  VLDS          Status register 10        00 to FF (hex)            12Hz
+172  VLDS          Status register 9         00 to FF (hex)            12Hz
+173  VLDS          Status register 8         00 to FF (hex)            12Hz
+174  VLDS          Status register 7         00 to FF (hex)            12Hz
+175  VLDS          Status register 6         00 to FF (hex)            12Hz
+176  VLDS          Status register 5         00 to FF (hex)            12Hz
+177  VLDS          Status register 4         00 to FF (hex)            12Hz
+178  VLDS          Status register 3         00 to FF (hex)            12Hz
+179  VLDS          Status register 2         00 to FF (hex)            12Hz
+180  VLDS          Status register 1         00 to FF (hex)            12Hz
+181  VLDS          Status register 0         00 to FF (hex)            12Hz
+182  VLDS          VLDS attn-0 assertion cnt 00 to FF (hex)            12Hz
+183  VLDS          VLDS exception halt count 00 to FF (hex)            12Hz
+184  VLDS          VLDS handshake status     00 to FF (hex)            12Hz
+185  VLDS          Last GSE req VLDS command 00 to 99 (BCD)            12Hz
+186  VLDS          Last VLDS command sent    00 to 99 (BCD)            12Hz
+187  VLDS          Req VLDS register id      00 to 99 (BCD)            12Hz
+188  VLDS          Req VLDS regstr contents  00 to FF (hex)            12Hz
+189  VLDS          VLDS error count          00 to FF (hex)            12Hz
+190  VLDS          VLDS error code           00 to FF (hex)            12Hz
+191  VLDS          VLDS interface error cnt  00 to FF (hex)            12Hz
+192  VLDS          VLDS interface error code 00 to FF (hex)            12Hz
+193  F/W status    Gyro saturation error cnt 00 to FF (hex)            12Hz
+194  F/W status    Gyro saturation err code  00 to FF (hex)            12Hz
+195  F/W status    Spare
+196  F/W status    Spare
+197  F/W status    Drvng intrpts t-o err cnt 00 to FF (hex)            12Hz
+198  F/W status    Drvng intrpts t-o err code00 to FF (hex)            12Hz
+199  F/W status    Cal buf write error count 00 to FF (hex)            12Hz
+200  F/W status    Cal buf write error code  00 to FF (hex)            12Hz
+201  F/W status    Quick DMA c-t err count   00 to FF (hex)            12Hz
+202  F/W status    Quick DMA c-t err code    00 to FF (hex)            12Hz
+203  F/W status    Quick PROM t-f chksm MSB  00 to FF (hex)            12Hz
+204  F/W status    Quick PROM t-f chksm LSB  00 to FF (hex)            12Hz
+205  F/W status    Quick RAM test bad addrMSB00 to FF (hex)            12Hz
+206  F/W status    Quick RAM test bad addrLSB00 to FF (hex)            12Hz
+207  F/W status    Anomalous intrpt err cnt  00 to FF (hex)            12Hz
+208  F/W status    Anomalous intrpt err code 00 to FF (hex)            12Hz
+209  F/W status    Time delay req error cnt  00 to FF (hex)            12Hz
+210  F/W status    Time delay req error code 00 to FF (hex)            12Hz
+211  F/W status    Shutter cntrl error count 00 to FF (hex)            12Hz
+212  F/W status    Shutter cntrl error code  00 to FF (hex)            12Hz
+213  F/W status    Cal fltr pos error count  00 to FF (hex)            12Hz
+214  F/W status    Cal fltr pos error code   00 to FF (hex)            12Hz
+215  F/W status    Focusing cntrl error cnt  00 to FF (hex)            12Hz
+216  F/W status    Focusing cntrl error code 00 to FF (hex)            12Hz
+217  F/W status    DMA controller error cnt  00 to FF (hex)            12Hz
+218  F/W status    DMA controller error code 00 to FF (hex)            12Hz
+219  F/W status    ENG data acqstn err count 00 to FF (hex)            12Hz
+220  F/W status    ENG data acqstn err code  00 to FF (hex)            12Hz
+221  F/W status    Flight data acqstn errcnt 00 to FF (hex)            12Hz
+222  F/W status    Flight data acqstn errcode00 to FF (hex)            12Hz
+223  F/W status    Fatal error count         00 to FF (hex)            12Hz
+224  F/W status    Fatal error status code   00 to FF (hex)            12Hz
+
+----------------------------------------------------------------------------
+
+*.nav      NAVIGATION DATA
+
+File type:  ASCII.
+
+This file can be typed to the screen.  For each AVIRIS line the values
+below are encoded and written in this file:
+
+PARAMETER         UNITS               FORMAT         BYTE SIZE   SOURCE
+
+GPS status        [G = valid/N = not] XX             2           Inserted
+UTC time (GMT)    days:hrs:min:sec    XXX:XX:XX:XX   12          GPS
+Latitude          degrees N/S         hXX.XXXXX      9           INU
+Longitude         degrees E/W         hXXX.XXXXX     10          INU
+True heading      degrees             XXX.XX         6           INU
+Pitch (up = +)    degrees             sXX.XXXX       8           INU
+Roll (right = +)  degrees             sXX.XXXX       8           INU
+Ground speed      meters/second       XXX.XX         6           INU
+Track angle       degrees             XXX.XX         6           INU
+Wind speed        meters/second       XX.X           4           INU
+Wind direction    degrees             XXX.X          5           INU
+Body long. accel. G                   sX.XXX         6           INU
+Body lat. accel.  G                   sX.XXX         6           INU
+Body norm. accel. G                   sX.XXX         6           INU
+Track angle rate  degrees/second      sXX.X          5           INU
+Pitch rate        degrees/second      sXX.X          5           INU
+Roll rate         degrees/second      sXX.X          5           INU
+Inert. vert. spd. meters/second       sXX.XX         6           INU
+GPS altitude      meters              XXXXX.X        7           GPS
+GPS latitude      degrees N/S         hXX.XXXXX      9           GPS
+GPS longitude     degrees E/W         hXXX.XXXXX     10          GPS
+Static pressure   millibar            XXXX.XXX       8           Analog
+Total pressure    millibar            XXXX.XXX       8           Analog
+Diff. pressure    millibar            XX.XXX         6           Analog
+Total temp.       degrees C           sXX.XX         6           Analog
+Static temp.      degrees C           sXX.XX         6           Derived
+Barometric alt.   meters              XXXXX.X        7           Derived
+Mach no.          n/a                 X.XXX          5           Derived
+True air speed    meters/second       XXX.(XX)       4 (6)       Derived
+   [this last value is truncated from 6 to 4 bytes]
+
+----------------------------------------------------------------------------
+
+*.img      CALIBRATED AVIRIS RADIANCE (IMAGE) DATA
+
+Contents:   AVIRIS calibrated radiance multipled by the gain and stored as
+            16-bit integers.
+File type:  BINARY 16-bit signed integer IEEE.
+Units:      gain times (microwatts per centimeter_squared per nanometer per
+            steradian).
+Format:     Band interleaved by pixel (channel, sample, line) with dimensions
+            (224, 614, 512).  The last scene may be less than 512.  To
+            calculate the number of lines divide the file size by 275,072
+            bytes per line.
+--------------------------------------------------------------------------------
+KNOWN ARTIFACTS
+
+1)	There is a slew effect in the AVIRIS detector array readout.  Slew 
+expresses itself as a slight shift in the IFOV when moving from regions of 
+very different brightnesses.
+

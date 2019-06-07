@@ -1,0 +1,43 @@
+***  Enter for every run:
+
+site_name      = Indian Pines 2
+location       = IN
+
+investigator   = baumgardner
+
+pilot_st_lat   = 40 12 30
+pilot_end_lat  = 40 18 30
+
+pilot_st_long  = -85 08 54
+pilot_end_long = -85 08 54
+
+pilot_st_date  = 960705
+pilot_st_time  = 15 28 15
+pilot_end_date = 960705
+pilot_end_time = 15 30 45
+
+type           = 1
+
+pilot_comments = clear.
+
+proc_comments  = 
+
+***  Enter once per flight tape:
+
+ARC_flight_id  = 
+NASA_log       = 
+
+pilot          = 
+aircraft_id    = 
+
+takeoff_date   = 
+takeoff_time   = 
+landing_date   = 
+landing_time   = 
+
+deploymt_site  = 
+
+***  Enter N below if OBC correction should NOT be perfomed:
+
+OBC_performed  = 
+

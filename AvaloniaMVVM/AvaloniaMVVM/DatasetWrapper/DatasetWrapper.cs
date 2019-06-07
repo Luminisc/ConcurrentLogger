@@ -15,7 +15,8 @@ namespace AvaloniaMVVM.DatasetWrapper
     public class DatasetWrapper : IDisposable
     {
         //public static string picturePath = Path.Combine(Consts.relativePathToRoot, @"Pics/Data_Envi/samson_1.img");
-        public static string picturePath = Path.Combine(Consts.relativePathToRoot, @"Pics/moffet_field/f080611t01p00r07rdn_c_sc01_ort_img");
+        //public static string picturePath = Path.Combine(Consts.relativePathToRoot, @"Pics/moffet_field/f080611t01p00r07rdn_c_sc01_ort_img");
+        public static string picturePath = Path.Combine(Consts.relativePathToRoot, @"Pics/lowAltitude/f960705t01p02_r02c_img");
 
         public int Width;
         public int Height;
@@ -36,7 +37,7 @@ namespace AvaloniaMVVM.DatasetWrapper
 
             //Width = 20;
             //Height = 20;
-            Depth = 100;
+            //Depth = 100;
 
             var envi = dataset.GetMetadata("ENVI");
         }
