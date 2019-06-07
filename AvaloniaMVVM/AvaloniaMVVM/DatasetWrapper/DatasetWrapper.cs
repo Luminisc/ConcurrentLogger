@@ -36,7 +36,9 @@ namespace AvaloniaMVVM.DatasetWrapper
 
             //Width = 20;
             //Height = 20;
-            //Depth = 100;
+            Depth = 100;
+
+            var envi = dataset.GetMetadata("ENVI");
         }
 
         ~DatasetWrapper()
@@ -281,6 +283,25 @@ namespace AvaloniaMVVM.DatasetWrapper
                     Marshal.Copy((int[])(object)data.xyPicture, 0, ptr, data.xyPicture.Length);
                 }
                 img.Save($"D://Temp/{sb.ToString()}");
+            }
+        }
+
+        public short[] GetBandRaw(int band)
+        {
+            var bandSize = Width * Height;
+            short[] result = new short[bandSize];
+            dataset_v.CopyTo(result, new Index3(0, 0, band), 0, new Index3(Width, Height, 1));
+            return result;
+        }
+
+        public void AccumulateEdges(ref WriteableBitmap bmp, byte[] cannyData, byte pearsonThreshold, short maxValue)
+        {
+            uint[] data = EdgeDetectionWrapper.AccumulateEdges(dataset_v, dataset_v_byte, cannyData, pearsonThreshold, maxValue);
+
+            using (var buf = bmp.Lock())
+            {
+                IntPtr ptr = buf.Address;
+                Marshal.Copy((int[])(object)data, 0, ptr, data.Length);
             }
         }
     }

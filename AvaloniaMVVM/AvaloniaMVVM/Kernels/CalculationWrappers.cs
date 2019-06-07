@@ -10,8 +10,10 @@ namespace AvaloniaMVVM.Kernels
 {
     public static class CalculationWrappers
     {
-        static Action<Index, ArrayView<uint>, ArrayView<short>, double, short> pinConvertKernel { get { return GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<uint>, ArrayView<short>, double, short>(Kernels.PicConvertion); } }
-        static Action<Index, ArrayView<uint>, ArrayView<byte>, double, short> pinConvertFromByteKernel { get { return GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<uint>, ArrayView<byte>, double, short>(Kernels.PicConvertionByte); } }
+        static readonly Action<Index, ArrayView<uint>, ArrayView<short>, double, short> pinConvertKernel =
+            GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<uint>, ArrayView<short>, double, short>(Kernels.PicConvertion);
+        static readonly Action<Index, ArrayView<uint>, ArrayView<byte>, double, short> pinConvertFromByteKernel =
+            GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<uint>, ArrayView<byte>, double, short>(Kernels.PicConvertionByte);
         static Action<Index, ArrayView<short>, ArrayView<short>> noOpKernel { get { return GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<short>, ArrayView<short>>(Kernels.NoOp); } }
 
         public static uint[] PicConvertion(Index index, ArrayView3D<short> imageView, int band, double mult, short min)
@@ -158,17 +160,18 @@ namespace AvaloniaMVVM.Kernels
             return result;
         }
 
+        static Action<Index, ArrayView3D<short>, ArrayView<double>, ArrayView<short>, ArrayView<double>> calcStatsKernel =
+            GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView3D<short>, ArrayView<double>, ArrayView<short>, ArrayView<double>>(BrightnessKernels.CalculateBrightnessStats);
+        static Action<Index, ArrayView<int>, int> memSetKernel =
+            GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<int>, int>(Kernels.Memset);
+        static Action<Index, ArrayView<double>, ArrayView<short>, ArrayView<double>, ArrayView2D<int>, int, int, int, double> calcMapKernel =
+            GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<double>, ArrayView<short>, ArrayView<double>, ArrayView2D<int>, int, int, int, double>(BrightnessKernels.CalculateBrightnessMap);
+
         public static BrightnessCalculationData CalculateBrightnessStats(ArrayView3D<short> imageView, BrightnessCalculationData output)
         {
-            var calcStatsKernel = GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView3D<short>, ArrayView<double>, ArrayView<short>, ArrayView<double>>(BrightnessKernels.CalculateBrightnessStats);
-            var memSetKernel = GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<int>, int>(Kernels.Memset);
-            var calcMapKernel = GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<double>, ArrayView<short>, ArrayView<double>, ArrayView2D<int>, int, int, int, double>(BrightnessKernels.CalculateBrightnessMap);
-
-
             using (var MeanBrightnessBuf = GpuContext.Instance.Accelerator.Allocate<double>(imageView.Depth))
             using (var MaxBrightnessBuf = GpuContext.Instance.Accelerator.Allocate<short>(imageView.Depth))
             using (var DeviationBuf = GpuContext.Instance.Accelerator.Allocate<double>(imageView.Depth))
-
             {
                 calcStatsKernel(imageView.Depth, imageView, MeanBrightnessBuf.View, MaxBrightnessBuf.View, DeviationBuf.View);
                 GpuContext.Instance.Accelerator.Synchronize();
@@ -219,16 +222,17 @@ namespace AvaloniaMVVM.Kernels
             return (outputBuf, buff);
         }
 
-        static Action<Index, ArrayView<byte>, byte, byte> thresholdingKernel =
+        static readonly Action<Index, ArrayView<byte>, byte, byte> thresholdingKernel =
             GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<byte>, byte, byte>(Kernels.Thresholding);
-        static Action<Index, ArrayView<float>, ArrayView<byte>> floatToByteKernel =
+        static readonly Action<Index, ArrayView<float>, ArrayView<byte>> floatToByteKernel =
             GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<float>, ArrayView<byte>>(Kernels.FloatToByte);
+        static readonly Action<Index2, ArrayView3D<float>, ArrayView3D<byte>> pearsonKernel =
+            GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index2, ArrayView3D<float>, ArrayView3D<byte>>(CorrelationKernels.CorrelationMap);
+        static readonly Action<Index, ArrayView<float>, float> normilizeKernel =
+            GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<float>, float>(Kernels.NormalizeValues);
 
         public static CorrelationData CalculatePearsonCorrelation(ArrayView3D<byte> imageView, byte lowThreshold = 0, byte highThreshold = 0)
         {
-            var pearsonKernel = GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index2, ArrayView3D<float>, ArrayView3D<byte>>(CorrelationKernels.CorrelationMap);
-            var normilizeKernel = GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<float>, float>(Kernels.NormalizeValues);
-
             var result = new CorrelationData();
 
             var slice = imageView.GetSliceView(0);
@@ -256,7 +260,9 @@ namespace AvaloniaMVVM.Kernels
                 {
                     thresholdingKernel(byteBuf.Extent.Size, byteBuf.AsLinearView(), lowThreshold, highThreshold);
                     GpuContext.Instance.Accelerator.Synchronize();
-                }                
+                }
+
+                result.rawPicture = byteBuf.GetAsArray().Skip(slice.Extent.Size * 2).ToArray();
 
                 pinConvertFromByteKernel(slice.Extent.Size, ImageBuf.GetSliceView(0).AsLinearView(), byteBuf.GetSliceView(0).AsLinearView(), 1.0, 0);
                 pinConvertFromByteKernel(slice.Extent.Size, ImageBuf.GetSliceView(1).AsLinearView(), byteBuf.GetSliceView(1).AsLinearView(), 1.0, 0);
@@ -286,20 +292,23 @@ namespace AvaloniaMVVM.Kernels
 
     public static class EdgeDetectionWrapper
     {
-        static Action<Index2, ArrayView3D<float>, ArrayView3D<short>, short> calculateSignatureLengthDerivativeKernel =
+        static readonly Action<Index2, ArrayView3D<float>, ArrayView3D<short>, short> calculateSignatureLengthDerivativeKernel =
             GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index2, ArrayView3D<float>, ArrayView3D<short>, short>(EdgeDetectionKernels.CalculateSignatureLengthDerivative);
-        static Action<Index2, ArrayView3D<float>, ArrayView3D<short>, short> calculateSignatureLengthDerivativeWithNormalizationKernel =
+        static readonly Action<Index2, ArrayView3D<float>, ArrayView3D<short>, short> calculateSignatureLengthDerivativeWithNormalizationKernel =
             GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index2, ArrayView3D<float>, ArrayView3D<short>, short>(EdgeDetectionKernels.CalculateSignatureLengthDerivativeWithNormalization);
-        static Action<Index2, ArrayView3D<float>, ArrayView3D<byte>> b_calculateSignatureLengthDerivativeKernel =
+        static readonly Action<Index2, ArrayView3D<float>, ArrayView3D<byte>> b_calculateSignatureLengthDerivativeKernel =
             GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index2, ArrayView3D<float>, ArrayView3D<byte>>(EdgeDetectionKernels.CalculateSignatureLengthDerivative);
-        static Action<Index2, ArrayView3D<float>, ArrayView3D<byte>> b_calculateSignatureLengthDerivativeWithNormalizationKernel =
+        static readonly Action<Index2, ArrayView3D<float>, ArrayView3D<byte>> b_calculateSignatureLengthDerivativeWithNormalizationKernel =
             GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index2, ArrayView3D<float>, ArrayView3D<byte>>(EdgeDetectionKernels.CalculateSignatureLengthDerivativeWithNormalization);
-        static Action<Index2, ArrayView3D<float>, int, float> normalizeLengthMapKernel =
+        static readonly Action<Index2, ArrayView3D<float>, int, float> normalizeLengthMapKernel =
             GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index2, ArrayView3D<float>, int, float>(EdgeDetectionKernels.NormalizeLengthMap);
-        static Action<Index, ArrayView<float>, ArrayView<byte>> floatToByteKernel =
+        static readonly Action<Index, ArrayView<float>, ArrayView<byte>> floatToByteKernel =
             GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<float>, ArrayView<byte>>(Kernels.FloatToByte);
+        static Action<Index2, ArrayView2D<uint>, ArrayView2D<byte>, ArrayView2D<byte>, ArrayView2D<byte>, ArrayView2D<byte>> accumulateEdgesKernel =
+            GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index2, ArrayView2D<uint>, ArrayView2D<byte>, ArrayView2D<byte>, ArrayView2D<byte>, ArrayView2D<byte>>(EdgeDetectionKernels.AccumulateEdges);
 
-        static Action<Index, ArrayView<uint>, ArrayView<byte>, double, short> pinConvertFromByteKernel { get { return GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<uint>, ArrayView<byte>, double, short>(Kernels.PicConvertionByte); } }
+        static readonly Action<Index, ArrayView<uint>, ArrayView<byte>, double, short> pinConvertFromByteKernel =
+            GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView<uint>, ArrayView<byte>, double, short>(Kernels.PicConvertionByte);
 
         public static PicturesData CalculateSignatureLengthDerivative(ArrayView3D<short> imageView, bool normalize, short maxValue)
         {
@@ -320,7 +329,6 @@ namespace AvaloniaMVVM.Kernels
                 var array = calcBuffer.GetAsArray();
                 var maxBand1 = array.Take(slice.Extent.Size).Max();
                 var maxBand2 = array.Skip(slice.Extent.Size).Take(slice.Extent.Size).Max();
-                //var maxBand3 = array.Skip(slice.Extent.Size * 2).Max();
                 var maxBand3 = XMath.Max(maxBand1, maxBand2);
 
                 normalizeLengthMapKernel(slice.Extent, calcBuffer, 0, maxBand1); GpuContext.Instance.Accelerator.Synchronize();
@@ -329,6 +337,8 @@ namespace AvaloniaMVVM.Kernels
 
                 floatToByteKernel(calcBuffer.Extent.Size, calcBuffer.AsLinearView(), byteBuf.AsLinearView());
                 GpuContext.Instance.Accelerator.Synchronize();
+
+                result.rawPicture = byteBuf.GetAsArray().Skip(slice.Extent.Size * 2).ToArray();
 
                 pinConvertFromByteKernel(slice.Extent.Size, imageBuffer.GetSliceView(0).AsLinearView(), byteBuf.GetSliceView(0).AsLinearView(), 1.0, 0);
                 pinConvertFromByteKernel(slice.Extent.Size, imageBuffer.GetSliceView(1).AsLinearView(), byteBuf.GetSliceView(1).AsLinearView(), 1.0, 0);
@@ -384,6 +394,9 @@ namespace AvaloniaMVVM.Kernels
                 floatToByteKernel(calcBuffer.Extent.Size, calcBuffer.AsLinearView(), byteBuf.AsLinearView());
                 GpuContext.Instance.Accelerator.Synchronize();
 
+                result.rawPicture = byteBuf.GetAsArray().Skip(slice.Extent.Size * 2).ToArray();
+
+
                 pinConvertFromByteKernel(slice.Extent.Size, imageBuffer.GetSliceView(0).AsLinearView(), byteBuf.GetSliceView(0).AsLinearView(), 1.0, 0);
                 pinConvertFromByteKernel(slice.Extent.Size, imageBuffer.GetSliceView(1).AsLinearView(), byteBuf.GetSliceView(1).AsLinearView(), 1.0, 0);
                 pinConvertFromByteKernel(slice.Extent.Size, imageBuffer.GetSliceView(2).AsLinearView(), byteBuf.GetSliceView(2).AsLinearView(), 1.0, 0);
@@ -403,6 +416,36 @@ namespace AvaloniaMVVM.Kernels
                 buf = new uint[size];
                 Array.Copy(img, size * 2, buf, 0, size);
                 result.xyPicture = buf;
+            }
+
+            return result;
+        }
+
+        public static uint[] AccumulateEdges(ArrayView3D<short> imageShortView, ArrayView3D<byte> imageByteView, byte[] cannyData, byte pearsonThreshold, short maxValue)
+        {
+            uint[] result = null;
+
+            var pearsonData = CalculationWrappers.CalculatePearsonCorrelation(imageByteView, 0, pearsonThreshold).rawPicture;
+            var signLengthByte = CalculateSignatureLengthDerivative(imageByteView, true).rawPicture;
+            var signLengthShort = CalculateSignatureLengthDerivative(imageShortView, true, maxValue).rawPicture;
+
+            var picIndex = imageByteView.GetSliceView(0).Extent;
+
+            using (var pearsBuffer = GpuContext.Instance.Accelerator.Allocate<byte>(picIndex))
+            using (var signLengthByteBuffer = GpuContext.Instance.Accelerator.Allocate<byte>(picIndex))
+            using (var signLengthShortBuffer = GpuContext.Instance.Accelerator.Allocate<byte>(picIndex))
+            using (var cannyBuffer = GpuContext.Instance.Accelerator.Allocate<byte>(picIndex))
+            using (var imgBuffer = GpuContext.Instance.Accelerator.Allocate<uint>(picIndex))
+            {
+                pearsBuffer.CopyFrom(pearsonData, 0, Index2.Zero, picIndex.Size);
+                signLengthByteBuffer.CopyFrom(signLengthByte, 0, Index2.Zero, picIndex.Size);
+                signLengthShortBuffer.CopyFrom(signLengthShort, 0, Index2.Zero, picIndex.Size);
+                cannyBuffer.CopyFrom(cannyData, 0, Index2.Zero, picIndex.Size);
+
+                accumulateEdgesKernel(picIndex, imgBuffer.View, pearsBuffer.View, cannyBuffer.View, signLengthByteBuffer.View, signLengthShortBuffer.View);
+                GpuContext.Instance.Accelerator.Synchronize();
+
+                result = imgBuffer.GetAsArray();
             }
 
             return result;

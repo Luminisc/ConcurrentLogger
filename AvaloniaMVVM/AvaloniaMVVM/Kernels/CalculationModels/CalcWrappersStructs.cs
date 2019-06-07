@@ -24,6 +24,7 @@ namespace AvaloniaMVVM.Kernels
         public uint[] xCorrelation;
         public uint[] yCorrelation;
         public uint[] xyCorrelation;
+        public byte[] rawPicture;
     }
 
     public class PicturesData
@@ -31,5 +32,11 @@ namespace AvaloniaMVVM.Kernels
         public uint[] xPicture;
         public uint[] yPicture;
         public uint[] xyPicture;
+        public byte[] rawPicture;
+    }
+
+    public class AccumulationData
+    {
+
     }
 }

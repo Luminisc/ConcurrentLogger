@@ -8,6 +8,7 @@ using AvaloniaMVVM.DatasetWrapper;
 using Avalonia.Input;
 using System.Linq;
 using AvaloniaMVVM.Etc;
+using System.Runtime.InteropServices;
 
 namespace AvaloniaMVVM.ViewModels
 {
@@ -86,6 +87,33 @@ namespace AvaloniaMVVM.ViewModels
             RenderImage = null;
             wrapper.RenderBand(ref img, Band);
             RenderImage = img;
+        }
+
+        public void RenderCanny()
+        {
+            InitializeDataset();
+
+            if (_renderImage == null)
+                return;
+
+            var rimg = _renderImage;
+
+            SaveImage("Precanny.png");
+            OpenCvSharp.Mat src = new OpenCvSharp.Mat("Precanny.png", OpenCvSharp.ImreadModes.Grayscale);
+            OpenCvSharp.Mat dst = new OpenCvSharp.Mat();
+            OpenCvSharp.Cv2.Canny(src, dst, LowThresholdValue, HighThresholdValue);
+
+            byte[] img = new byte[wrapper.Width * wrapper.Height];
+            dst.GetArray(0, 0, img);
+            uint[] data = img.Select(x => x == 0 ? (uint)0 + 255 << 24 : uint.MaxValue).ToArray();
+
+            using (var buf = rimg.Lock())
+            {
+                IntPtr ptr = buf.Address;
+                Marshal.Copy((int[])(object)data, 0, ptr, data.Length);
+            }
+            RenderImage = null;
+            RenderImage = rimg;
         }
 
         public void RenderCorrelation()
@@ -211,9 +239,45 @@ namespace AvaloniaMVVM.ViewModels
             RenderPearsonCorrelation();
         }
 
-        public void SaveImage()
+        public void SaveImage(string path = "")
         {
-            _renderImage.Save($"D://img_{DateTime.Now.ToFileTime()}.png");
+            if (string.IsNullOrWhiteSpace(path))
+                _renderImage.Save($"D://img_{DateTime.Now.ToFileTime()}.png");
+            else
+                _renderImage.Save(path);
+        }
+
+        public void AccumulateEdges()
+        {
+            InitializeDataset();
+
+            // canny
+            var old = _renderImage;
+            _renderImage = new WriteableBitmap(new PixelSize(wrapper.Width, wrapper.Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888);
+            wrapper.RenderBand(ref _renderImage, 17); //Because 17th band is close to green spectrum
+
+            SaveImage("Precanny.png");
+            OpenCvSharp.Mat src = new OpenCvSharp.Mat("Precanny.png", OpenCvSharp.ImreadModes.Grayscale);
+            OpenCvSharp.Mat dst = new OpenCvSharp.Mat();
+            OpenCvSharp.Cv2.Canny(src, dst, lowThresholdValue, 100);    // 0 and 100 thresholds giving more or less clear picture of edges
+
+            byte[] cannyData = new byte[wrapper.Width * wrapper.Height];
+            dst.GetArray(0, 0, cannyData);
+
+            var img = _renderImage;
+            wrapper.AccumulateEdges(ref img, cannyData, HighThresholdValue, (short)(maxMeanBrightness * 2));
+            RenderImage = null;
+            RenderImage = img;
+
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine($"White: Pearson correlation with threshold = {HighThresholdValue}");
+            sb.AppendLine("Red: Canny edge detection");
+            sb.AppendLine("Green: Normalized signatures difference length - byte representation");
+            sb.AppendLine("Blue: Normalized signatures difference length - short representation");
+
+            Description = sb.ToString();
+
+            SaveImage($"D://Temp/accumulatedEdges_{wrapper.Depth}Bands_{HighThresholdValue}Threshold.png");
         }
 
         public void InitializeDataset()
