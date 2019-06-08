@@ -288,6 +288,24 @@ namespace AvaloniaMVVM.Kernels
 
             return result;
         }
+
+        static readonly Action<Index2, ArrayView2D<uint>, ArrayView3D<short>, int,int,int,short> calPseudoColorKernel =
+            GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index2, ArrayView2D<uint>, ArrayView3D<short>, int, int, int, short>(Kernels.CalculatePseudoColor);
+
+        public static uint[] CalculatePseudoColor(ArrayView3D<short> imageView, int redBand, int greenBand, int blueBand, short max)
+        {
+            uint[] result = null;
+            var sliceIndex = imageView.GetSliceView(0).Extent;
+            using (var ImageBuf = GpuContext.Instance.Accelerator.Allocate<uint>(sliceIndex))
+            {
+                calPseudoColorKernel(sliceIndex, ImageBuf.View, imageView, redBand, greenBand, blueBand, max);
+                GpuContext.Instance.Accelerator.Synchronize();
+
+                result = ImageBuf.GetAsArray();
+            }
+
+            return result;
+        }
     }
 
     public static class EdgeDetectionWrapper

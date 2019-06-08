@@ -15,8 +15,8 @@ namespace AvaloniaMVVM.DatasetWrapper
     public class DatasetWrapper : IDisposable
     {
         //public static string picturePath = Path.Combine(Consts.relativePathToRoot, @"Pics/Data_Envi/samson_1.img");
-        //public static string picturePath = Path.Combine(Consts.relativePathToRoot, @"Pics/moffet_field/f080611t01p00r07rdn_c_sc01_ort_img");
-        public static string picturePath = Path.Combine(Consts.relativePathToRoot, @"Pics/lowAltitude/f960705t01p02_r02c_img");
+        public static string picturePath = Path.Combine(Consts.relativePathToRoot, @"Pics/moffet_field/f080611t01p00r07rdn_c_sc01_ort_img");
+        //public static string picturePath = Path.Combine(Consts.relativePathToRoot, @"Pics/lowAltitude/f960705t01p02_r02c_img");
 
         public int Width;
         public int Height;
@@ -37,7 +37,7 @@ namespace AvaloniaMVVM.DatasetWrapper
 
             //Width = 20;
             //Height = 20;
-            //Depth = 100;
+            Depth = 98;
 
             var envi = dataset.GetMetadata("ENVI");
         }
@@ -298,6 +298,33 @@ namespace AvaloniaMVVM.DatasetWrapper
         public void AccumulateEdges(ref WriteableBitmap bmp, byte[] cannyData, byte pearsonThreshold, short maxValue)
         {
             uint[] data = EdgeDetectionWrapper.AccumulateEdges(dataset_v, dataset_v_byte, cannyData, pearsonThreshold, maxValue);
+
+            using (var buf = bmp.Lock())
+            {
+                IntPtr ptr = buf.Address;
+                Marshal.Copy((int[])(object)data, 0, ptr, data.Length);
+            }
+        }
+
+        public void RenderPseudoColor(ref WriteableBitmap bmp, short max = -1)
+        {
+            var redBand = 11 - 1;
+            var greenBand = 17 - 1;
+            var blueBand = 38 - 1;
+
+            double[] MinMax = new double[2];
+            dataset.GetRasterBand(redBand).ComputeRasterMinMax(MinMax, 0);
+            short redMax = (short)(MinMax[1]);
+            dataset.GetRasterBand(greenBand).ComputeRasterMinMax(MinMax, 0);
+            short greenMax = (short)(MinMax[1]);
+            dataset.GetRasterBand(blueBand).ComputeRasterMinMax(MinMax, 0);
+            short blueMax = (short)(MinMax[1]);
+            if (max == -1)
+                max = XMath.Max(blueMax, Math.Max(redMax, greenMax));
+
+            uint[] data = CalculationWrappers.CalculatePseudoColor(dataset_v.View, redBand, greenBand, blueBand, max);
+
+            bmp = new WriteableBitmap(new PixelSize(Width, Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888);
 
             using (var buf = bmp.Lock())
             {

@@ -354,6 +354,15 @@ namespace AvaloniaMVVM.Kernels
 
             input[index] = val;
         }
+
+        public static void CalculatePseudoColor(Index2 index, ArrayView2D<uint> output, ArrayView3D<short> input, int redBand, int greenBand, int blueBand, short max)
+        {
+            uint r = (uint)(XMath.Clamp(input[index.X, index.Y, redBand], (short)0, max) / (float)max * 255);
+            uint g = (uint)(XMath.Clamp(input[index.X, index.Y, greenBand], (short)0, max) / (float)max * 255);
+            uint b = (uint)(XMath.Clamp(input[index.X, index.Y, blueBand], (short)0, max) / (float)max * 255);
+
+            output[index] = r + (g << 8) + (b << 16) + ((uint)255 << 24);
+        }
         #endregion
     }
 }

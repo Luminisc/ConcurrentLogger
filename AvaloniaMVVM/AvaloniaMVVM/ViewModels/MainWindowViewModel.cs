@@ -280,6 +280,16 @@ namespace AvaloniaMVVM.ViewModels
             SaveImage($"D://Temp/accumulatedEdges_{wrapper.Depth}Bands_{HighThresholdValue}Threshold.png");
         }
 
+        public void RenderPseudoColor()
+        {
+            InitializeDataset();
+
+            var img = _renderImage;
+            RenderImage = null;
+            wrapper.RenderPseudoColor(ref img, (short)(maxMeanBrightness * 2));
+            RenderImage = img;
+        }
+
         public void InitializeDataset()
         {
             if (loaded)
