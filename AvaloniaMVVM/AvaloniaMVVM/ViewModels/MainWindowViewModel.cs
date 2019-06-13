@@ -20,8 +20,6 @@ namespace AvaloniaMVVM.ViewModels
 
         }
 
-        public string Greeting { get; set; } = "Hello World!";
-
         private string _description;
         public string Description
         {
@@ -186,8 +184,8 @@ namespace AvaloniaMVVM.ViewModels
 
         public void RenderPearsonCorrelation()
         {
-            var img = _renderImage;
-            RenderImage = null;
+            var img = new WriteableBitmap(new PixelSize(wrapper.Width, wrapper.Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888);
+            //RenderImage = null;
             wrapper.RenderPearsonCorrelation(ref img, 0, highThresholdValue);
             RenderImage = img;
         }
@@ -198,7 +196,7 @@ namespace AvaloniaMVVM.ViewModels
 
             var img = _renderImage;
             RenderImage = null;
-            wrapper.RenderSignatureLengthDerivative(ref img, false, (short)(maxMeanBrightness * 2));
+            wrapper.RenderSignatureLengthDerivative(ref img, false, (short)(maxMeanBrightness * 2), highThresholdValue);
             RenderImage = img;
         }
 
@@ -208,7 +206,7 @@ namespace AvaloniaMVVM.ViewModels
 
             var img = _renderImage;
             RenderImage = null;
-            wrapper.RenderSignatureLengthDerivative(ref img, true, (short)(maxMeanBrightness * 2));
+            wrapper.RenderSignatureLengthDerivative(ref img, true, (short)(maxMeanBrightness * 2), highThresholdValue);
             RenderImage = img;
         }
 
@@ -287,6 +285,16 @@ namespace AvaloniaMVVM.ViewModels
             var img = _renderImage;
             RenderImage = null;
             wrapper.RenderPseudoColor(ref img, (short)(maxMeanBrightness * 2));
+            RenderImage = img;
+        }
+
+        public void RenderScanline()
+        {
+            InitializeDataset();
+
+            var img = _renderImage;
+            RenderImage = null;
+            wrapper.RenderScanline(ref img, Band-1, LowThresholdValue, HighThresholdValue);
             RenderImage = img;
         }
 

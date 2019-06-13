@@ -220,8 +220,6 @@ namespace AvaloniaMVVM.Kernels
 
         public static void AccumulateEdges(Index2 index, ArrayView2D<uint> output, ArrayView2D<byte> pearson, ArrayView2D<byte> canny, ArrayView2D<byte> signLengthByte, ArrayView2D<byte> signLengthShort)
         {
-            // canny red, signatureLengthByte is green, signatureLengthShort is blue
-
             uint r = (uint)XMath.Max(pearson[index] / 3, canny[index]); if (r > 254) r = 254;
             uint g = (uint)(XMath.Max(pearson[index] / 3, signLengthByte[index])); if (g > 254) g = 254;
             uint b = (uint)(XMath.Max(pearson[index] / 3, signLengthShort[index])); if (b > 254) b = 254;

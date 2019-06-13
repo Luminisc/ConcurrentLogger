@@ -16,7 +16,8 @@ namespace AvaloniaMVVM.Kernels
         public static void PicConvertionByte(Index index, ArrayView<uint> buf1, ArrayView<byte> buf2, double mult = 1, short min = 0)
         {
             byte rad = buf2[index];
-            if (rad == 255)
+
+            if (rad > 254)
                 rad = 254; // because there are issue with saving of white pixels
 
             buf1[index] = (uint)(rad + (rad << 8) + (rad << 16) + (255 << 24));
@@ -304,6 +305,26 @@ namespace AvaloniaMVVM.Kernels
         }
         #endregion
 
+        public static void CalculateSliceBand(Index2 index, ArrayView2D<uint> result, ArrayView3D<short> input, int Band)
+        {
+            var ind = new Index2(index.X, index.Y + input.Depth);
+            uint val = (uint)(input[index.X, index.Y, Band] / 9000f * 255);
+            result[ind] = (uint)((val) + (val << 8) + (val << 16) + (255 << 24));
+        }
+
+        public static void CalculateSlices(Index index, ArrayView2D<uint> result, ArrayView3D<short> input, int row, int column)
+        {
+            for (int i = 0; i < input.Width; i++)
+            {
+                uint val = (uint)(input[i, row, index.X] / 9000f * 255);
+                result[i + 1 /*+ index.X*/, input.Depth /*- index.X*/] = (uint)((val) + (val << 8) + (val << 16) + (255 << 24));
+            }
+            for (int i = 0; i < input.Height; i++)
+            {
+                uint val = (uint)(input[column, i, index.X] / 9000f * 255);
+                result[input.Width /*+ index.X*/, input.Depth - 1 /*- index.X*/ + i] = (uint)((val) + (val << 8) + (val << 16) + (255 << 24));
+            }
+        }
 
         #region Utils
         public static void NoOp(Index index, ArrayView<short> result, ArrayView<short> input)
@@ -319,10 +340,7 @@ namespace AvaloniaMVVM.Kernels
         public static void ConvertToByte(Index3 index, ArrayView3D<byte> output, ArrayView3D<short> input, short maxValue)
         {
             var val = input[index];
-            if (val > maxValue)
-                val = maxValue;
-            if (val < 0)
-                val = 0;
+            val = XMath.Clamp(val, (short)0, maxValue);
             byte result = (byte)((val / (float)maxValue) * 255);
             output[index] = result;
         }
@@ -342,7 +360,7 @@ namespace AvaloniaMVVM.Kernels
             output[index] = (byte)(val * 255);
         }
 
-        public static void Thresholding(Index index, ArrayView<byte> input, byte lowThreshold, byte highThreshold)
+        public static void Thresholding(Index index, ArrayView<byte> input, /*remove*/byte lowThreshold, byte highThreshold)
         {
             // TODO: correct two-side thresholding
             var val = input[index];

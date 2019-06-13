@@ -37,7 +37,7 @@ namespace AvaloniaMVVM.DatasetWrapper
 
             //Width = 20;
             //Height = 20;
-            Depth = 98;
+            Depth = 100;
 
             var envi = dataset.GetMetadata("ENVI");
         }
@@ -197,6 +197,9 @@ namespace AvaloniaMVVM.DatasetWrapper
                     Marshal.Copy((int[])(object)data.xyCorrelation, 0, ptr, data.xyCorrelation.Length);
                 }
                 img.Save($"D://Temp/PearsonCorrelation_{dataset_v_byte.Depth}Bands_{(highThreshold == 0 ? "No" : highThreshold.ToString())}Threshold_{time}.png");
+
+                OpenCvSharp.Mat mt = new OpenCvSharp.Mat(Height, Width, OpenCvSharp.MatType.CV_8U, data.rawPicture);
+                mt.SaveImage($"D://Temp/PearsonCorrelation_{dataset_v_byte.Depth}Bands_{(highThreshold == 0 ? "No" : highThreshold.ToString())}Threshold_{time}.bmp");
             }
 
             using (var buf = bmp.Lock())
@@ -204,11 +207,13 @@ namespace AvaloniaMVVM.DatasetWrapper
                 IntPtr ptr = buf.Address;
                 Marshal.Copy((int[])(object)data.xyCorrelation, 0, ptr, data.xyCorrelation.Length);
             }
+
+
         }
 
-        public void RenderSignatureLengthDerivative(ref WriteableBitmap bmp, bool normalize, short maxValue)
+        public void RenderSignatureLengthDerivative(ref WriteableBitmap bmp, bool normalize, short maxValue, byte highThreshold = 0)
         {
-            var data = EdgeDetectionWrapper.CalculateSignatureLengthDerivative(dataset_v.View, normalize, maxValue);
+            var data = EdgeDetectionWrapper.CalculateSignatureLengthDerivative(dataset_v.View, normalize, maxValue, highThreshold);
 
             using (var buf = bmp.Lock())
             {
@@ -216,22 +221,11 @@ namespace AvaloniaMVVM.DatasetWrapper
                 Marshal.Copy((int[])(object)data.xyPicture, 0, ptr, data.xyPicture.Length);
             }
 
+
+
             using (var img = new WriteableBitmap(new PixelSize(Width, Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888))
             {
                 string time = DateTime.Now.ToFileTime().ToString();
-                //using (var buf = img.Lock())
-                //{
-                //    IntPtr ptr = buf.Address;
-                //    Marshal.Copy((int[])(object)data.xPicture, 0, ptr, data.xPicture.Length);
-                //}
-                //img.Save($"D://Temp/xPicture_{time}.png");
-                //using (var buf = img.Lock())
-                //{
-                //    IntPtr ptr = buf.Address;
-                //    Marshal.Copy((int[])(object)data.yPicture, 0, ptr, data.yPicture.Length);
-                //}
-                //img.Save($"D://Temp/yPicture_{time}.png");
-                // SignatureLengthEdges_short_100bands_Clamped_normalized
                 System.Text.StringBuilder sb = new System.Text.StringBuilder();
                 sb.Append($"SignatureLengthEdges_short_{Depth}Bands_Clamped");
                 if (normalize)
@@ -244,6 +238,9 @@ namespace AvaloniaMVVM.DatasetWrapper
                     Marshal.Copy((int[])(object)data.xyPicture, 0, ptr, data.xyPicture.Length);
                 }
                 img.Save($"D://Temp/{sb.ToString()}");
+
+                OpenCvSharp.Mat mt = new OpenCvSharp.Mat(Height, Width, OpenCvSharp.MatType.CV_8U, data.rawPicture);
+                mt.SaveImage($"D://Temp/{sb.ToString()}.bmp");
             }
         }
 
@@ -256,6 +253,8 @@ namespace AvaloniaMVVM.DatasetWrapper
                 IntPtr ptr = buf.Address;
                 Marshal.Copy((int[])(object)data.xyPicture, 0, ptr, data.xyPicture.Length);
             }
+
+
 
             using (var img = new WriteableBitmap(new PixelSize(Width, Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888))
             {
@@ -284,15 +283,10 @@ namespace AvaloniaMVVM.DatasetWrapper
                     Marshal.Copy((int[])(object)data.xyPicture, 0, ptr, data.xyPicture.Length);
                 }
                 img.Save($"D://Temp/{sb.ToString()}");
-            }
-        }
 
-        public short[] GetBandRaw(int band)
-        {
-            var bandSize = Width * Height;
-            short[] result = new short[bandSize];
-            dataset_v.CopyTo(result, new Index3(0, 0, band), 0, new Index3(Width, Height, 1));
-            return result;
+                OpenCvSharp.Mat mt = new OpenCvSharp.Mat(Height, Width, OpenCvSharp.MatType.CV_8U, data.rawPicture);
+                mt.SaveImage($"D://Temp/{sb.ToString()}.bmp");
+            }
         }
 
         public void AccumulateEdges(ref WriteableBitmap bmp, byte[] cannyData, byte pearsonThreshold, short maxValue)
@@ -325,6 +319,19 @@ namespace AvaloniaMVVM.DatasetWrapper
             uint[] data = CalculationWrappers.CalculatePseudoColor(dataset_v.View, redBand, greenBand, blueBand, max);
 
             bmp = new WriteableBitmap(new PixelSize(Width, Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888);
+
+            using (var buf = bmp.Lock())
+            {
+                IntPtr ptr = buf.Address;
+                Marshal.Copy((int[])(object)data, 0, ptr, data.Length);
+            }
+        }
+
+        public void RenderScanline(ref WriteableBitmap bmp, int band, int row, int column)
+        {
+            var data = CalculationWrappers.CalcScanlineImage(dataset_v.View, band, row, column);
+
+            bmp = new WriteableBitmap(new Avalonia.PixelSize(Width + Depth, Height + Depth), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888);
 
             using (var buf = bmp.Lock())
             {
