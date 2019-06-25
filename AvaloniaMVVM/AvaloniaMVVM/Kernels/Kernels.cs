@@ -305,10 +305,10 @@ namespace AvaloniaMVVM.Kernels
         }
         #endregion
 
-        public static void CalculateSliceBand(Index2 index, ArrayView2D<uint> result, ArrayView3D<short> input, int Band)
+        public static void CalculateSliceBand(Index2 index, ArrayView2D<uint> result, ArrayView3D<short> input, int band)
         {
             var ind = new Index2(index.X, index.Y + input.Depth);
-            uint val = (uint)(input[index.X, index.Y, Band] / 9000f * 255);
+            uint val = (uint)(input[index.X, index.Y, band] / 9000f * 255);
             result[ind] = (uint)((val) + (val << 8) + (val << 16) + (255 << 24));
         }
 

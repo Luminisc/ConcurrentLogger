@@ -10,7 +10,7 @@ using System.Text;
 namespace AvaloniaMVVM.Gpu
 {
 
-    public class GpuContext : Singleton<GpuContext>, IDisposable
+    public class GpuContext : Singleton<GpuContext>
     {
         public Context Context { get; }
         public Accelerator Accelerator { get; }
@@ -21,11 +21,9 @@ namespace AvaloniaMVVM.Gpu
             Accelerator = Accelerator.Accelerators.Any(x => x.AcceleratorType == AcceleratorType.Cuda)
                 ? new CudaAccelerator(Context)
                 : (Accelerator)new CPUAccelerator(Context);
-            //Accelerator = new CPUAccelerator(Context);
-            //Accelerator = new CudaAccelerator(Context);
         }
-
-        public void Dispose()
+        
+        ~GpuContext()
         {
             Accelerator?.Dispose();
             Context?.Dispose();
@@ -34,18 +32,17 @@ namespace AvaloniaMVVM.Gpu
 
     public class Singleton<T> where T : new()
     {
-        private static T instance;
+        private static T _instance;
 
-        public Singleton()
-        { }
+        public Singleton() { }
 
         public static T Instance
         {
             get
             {
-                if (instance == null)
-                    instance = new T();
-                return instance;
+                if (_instance == null)
+                    _instance = new T();
+                return _instance;
             }
         }
     }

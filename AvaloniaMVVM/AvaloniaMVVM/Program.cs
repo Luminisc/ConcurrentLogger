@@ -14,21 +14,29 @@ using ILGPU;
 using ILGPU.Runtime.Cuda;
 using ILGPU.Runtime;
 using ILGPU.Runtime.CPU;
+using Directory = System.IO.Directory;
 
 namespace AvaloniaMVVM
 {
-    class Program
+    internal class Program
     {
-        public static readonly string relativePathToRoot = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), @"../../../");
-        public static string picturePath = Path.Combine(relativePathToRoot, @"Pics/Data_Envi/samson_1.img");
+        public static readonly string RelativePathToRoot = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "../../../");
+        public static readonly string PathToTemp = Path.Combine(RelativePathToRoot, "/Temp");
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
-            Console.WriteLine($"Current folder: {relativePathToRoot}");
-            Console.WriteLine();
+            Console.WriteLine($"Current folder: {RelativePathToRoot}");
+            Console.Write("Registering GDAL... ");
             Gdal.AllRegister();
+            Console.WriteLine("Successful.");
 
-            BuildAvaloniaApp().Start<MainWindow>(() => GetModel());
+            if (!Directory.Exists(PathToTemp))
+            {
+                Directory.CreateDirectory(PathToTemp);
+            }
+
+            BuildAvaloniaApp()
+                .Start<MainWindow>(GetModel);
         }
 
         public static AppBuilder BuildAvaloniaApp()

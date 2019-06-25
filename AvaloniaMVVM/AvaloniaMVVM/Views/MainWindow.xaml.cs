@@ -8,8 +8,8 @@ namespace AvaloniaMVVM.Views
 {
     public class MainWindow : Window
     {
-        Image _img;
-        MainWindowViewModel context => (MainWindowViewModel)DataContext;
+        private Image _img;
+        private MainWindowViewModel Context => (MainWindowViewModel)DataContext;
 
         public MainWindow()
         {
@@ -30,13 +30,13 @@ namespace AvaloniaMVVM.Views
             _img.PointerPressed += (s, ev) =>
             {
                 var pos = ev.GetPosition(_img);
-                context.OnImagePress(pos, new Size(_img.Bounds.Width, _img.Bounds.Height));
+                Context.OnImagePress(pos, new Size(_img.Bounds.Width, _img.Bounds.Height));
             };
         }
 
         private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            context.Dispose();
+            Context.Dispose();
         }
 
         private void InitializeComponent()

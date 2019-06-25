@@ -16,7 +16,7 @@ namespace AvaloniaMVVM.Etc
             {
                 sb.AppendLine($"{i + 1};{data.histogramData[i]}");
             }
-            File.WriteAllText($"D://Temp/histogramData_{depth}Bands_{DateTime.Now.ToFileTime().ToString()}.csv", sb.ToString());
+            File.WriteAllText($"{Program.PathToTemp}/histogramData_{depth}Bands_{DateTime.Now.ToFileTime().ToString()}.csv", sb.ToString());
         }
 
         public static void ExportBrightnessInCsv(BrightnessCalculationData data, int depth)
@@ -27,7 +27,7 @@ namespace AvaloniaMVVM.Etc
             {
                 sb.AppendLine($"{i + 1};{data.arrMeanBrightness[i]};{data.arrMaxBrightness[i]};{data.arrStandartDeviation[i]}");
             }
-            File.WriteAllText($"D://Temp/brightnessData_{depth}Bands_{DateTime.Now.ToFileTime().ToString()}.csv", sb.ToString());
+            File.WriteAllText($"{Program.PathToTemp}/brightnessData_{depth}Bands_{DateTime.Now.ToFileTime().ToString()}.csv", sb.ToString());
         }
     }
 }

@@ -34,20 +34,20 @@ namespace AvaloniaMVVM.ViewModels
             set => this.RaiseAndSetIfChanged(ref _renderImage, value);
         }
 
-        protected int _band = 1;
+        protected int band = 1;
         public int Band
         {
-            get => _band;
+            get => band;
             set
             {
                 var val = value;
                 if (wrapper != null)
-                    val = Math.Clamp(val, 0, wrapper.Depth);
+                    val = Math.Clamp(val, 0, wrapper.depth);
 
-                if (_band != val)
+                if (band != val)
                     ChangeBand();
 
-                this.RaiseAndSetIfChanged(ref _band, val);
+                this.RaiseAndSetIfChanged(ref band, val);
             }
         }
 
@@ -101,7 +101,7 @@ namespace AvaloniaMVVM.ViewModels
             OpenCvSharp.Mat dst = new OpenCvSharp.Mat();
             OpenCvSharp.Cv2.Canny(src, dst, LowThresholdValue, HighThresholdValue);
 
-            byte[] img = new byte[wrapper.Width * wrapper.Height];
+            byte[] img = new byte[wrapper.width * wrapper.height];
             dst.GetArray(0, 0, img);
             uint[] data = img.Select(x => x == 0 ? (uint)0 + 255 << 24 : uint.MaxValue).ToArray();
 
@@ -148,7 +148,7 @@ namespace AvaloniaMVVM.ViewModels
             sb.AppendLine($"Most frequent brightness: {hist.histogramData.Skip(1).Max()}");
             Description = sb.ToString();
 
-            DataExporter.ExportHistogramInCsv(hist, wrapper.Depth);
+            DataExporter.ExportHistogramInCsv(hist, wrapper.depth);
         }
 
         public void RenderBrightnessCalculationData()
@@ -171,7 +171,7 @@ namespace AvaloniaMVVM.ViewModels
             sb.AppendLine($"Maximum mean value: {maxMean} in {maxMeanBand + 1} band");
 
             Description = sb.ToString();
-            DataExporter.ExportBrightnessInCsv(calcs, wrapper.Depth);
+            DataExporter.ExportBrightnessInCsv(calcs, wrapper.depth);
         }
 
         public void ConvertToByteRepresentation()
@@ -184,7 +184,7 @@ namespace AvaloniaMVVM.ViewModels
 
         public void RenderPearsonCorrelation()
         {
-            var img = new WriteableBitmap(new PixelSize(wrapper.Width, wrapper.Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888);
+            var img = new WriteableBitmap(new PixelSize(wrapper.width, wrapper.height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888);
             //RenderImage = null;
             wrapper.RenderPearsonCorrelation(ref img, 0, highThresholdValue);
             RenderImage = img;
@@ -239,10 +239,7 @@ namespace AvaloniaMVVM.ViewModels
 
         public void SaveImage(string path = "")
         {
-            if (string.IsNullOrWhiteSpace(path))
-                _renderImage.Save($"D://img_{DateTime.Now.ToFileTime()}.png");
-            else
-                _renderImage.Save(path);
+            _renderImage.Save(string.IsNullOrWhiteSpace(path) ? $"D://img_{DateTime.Now.ToFileTime()}.png" : path);
         }
 
         public void AccumulateEdges()
@@ -250,8 +247,7 @@ namespace AvaloniaMVVM.ViewModels
             InitializeDataset();
 
             // canny
-            var old = _renderImage;
-            _renderImage = new WriteableBitmap(new PixelSize(wrapper.Width, wrapper.Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888);
+            _renderImage = new WriteableBitmap(new PixelSize(wrapper.width, wrapper.height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888);
             wrapper.RenderBand(ref _renderImage, 17); //Because 17th band is close to green spectrum
 
             SaveImage("Precanny.png");
@@ -259,7 +255,7 @@ namespace AvaloniaMVVM.ViewModels
             OpenCvSharp.Mat dst = new OpenCvSharp.Mat();
             OpenCvSharp.Cv2.Canny(src, dst, lowThresholdValue, 100);    // 0 and 100 thresholds giving more or less clear picture of edges
 
-            byte[] cannyData = new byte[wrapper.Width * wrapper.Height];
+            byte[] cannyData = new byte[wrapper.width * wrapper.height];
             dst.GetArray(0, 0, cannyData);
 
             var img = _renderImage;
@@ -275,7 +271,7 @@ namespace AvaloniaMVVM.ViewModels
 
             Description = sb.ToString();
 
-            SaveImage($"D://Temp/accumulatedEdges_{wrapper.Depth}Bands_{HighThresholdValue}Threshold.png");
+            SaveImage($"{Program.PathToTemp}/accumulatedEdges_{wrapper.depth}Bands_{HighThresholdValue}Threshold.png");
         }
 
         public void RenderPseudoColor()
@@ -304,7 +300,7 @@ namespace AvaloniaMVVM.ViewModels
                 return;
 
             wrapper = new DatasetWrapper.DatasetWrapper();
-            RenderImage = new WriteableBitmap(new PixelSize(wrapper.Width, wrapper.Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888);
+            RenderImage = new WriteableBitmap(new PixelSize(wrapper.width, wrapper.height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888);
             wrapper.LoadDatasetInVideoMemory();
             loaded = true;
         }

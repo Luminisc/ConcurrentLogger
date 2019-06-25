@@ -14,32 +14,30 @@ namespace AvaloniaMVVM.DatasetWrapper
 {
     public class DatasetWrapper : IDisposable
     {
-        //public static string picturePath = Path.Combine(Consts.relativePathToRoot, @"Pics/Data_Envi/samson_1.img");
-        public static string picturePath = Path.Combine(Consts.relativePathToRoot, @"Pics/moffet_field/f080611t01p00r07rdn_c_sc01_ort_img");
-        //public static string picturePath = Path.Combine(Consts.relativePathToRoot, @"Pics/lowAltitude/f960705t01p02_r02c_img");
+        public static string picturePath = Path.Combine(Consts.RelativePathToRoot, @"Pics/Data_Envi/samson_1.img");
+        //public static string picturePath = Path.Combine(Consts.RelativePathToRoot, @"Pics/moffet_field/f080611t01p00r07rdn_c_sc01_ort_img");
+        //public static string picturePath = Path.Combine(Consts.RelativePathToRoot, @"Pics/lowAltitude/f960705t01p02_r02c_img");
 
-        public int Width;
-        public int Height;
-        public int Depth;
+        public int width;
+        public int height;
+        public int depth;
 
-        private Dataset dataset;
+        private readonly Dataset _dataset;
 
-        private MemoryBuffer3D<short> dataset_v;
-        private MemoryBuffer3D<byte> dataset_v_byte;
+        private MemoryBuffer3D<short> _datasetV;
+        private MemoryBuffer3D<byte> _datasetVByte;
 
         public DatasetWrapper()
         {
-            dataset = Gdal.Open(picturePath, Access.GA_ReadOnly);
+            _dataset = Gdal.Open(picturePath, Access.GA_ReadOnly);
 
-            Width = dataset.RasterXSize;
-            Height = dataset.RasterYSize;
-            Depth = dataset.RasterCount;
+            width = _dataset.RasterXSize;
+            height = _dataset.RasterYSize;
+            depth = _dataset.RasterCount;
 
             //Width = 20;
             //Height = 20;
-            Depth = 100;
-
-            var envi = dataset.GetMetadata("ENVI");
+            //depth = 100;
         }
 
         ~DatasetWrapper()
@@ -49,35 +47,35 @@ namespace AvaloniaMVVM.DatasetWrapper
 
         public void Dispose()
         {
-            dataset?.Dispose();
-            dataset_v?.Dispose();
-            dataset_v_byte?.Dispose();
-            if (dataset_v != null) dataset_v = null;
+            _dataset?.Dispose();
+            _datasetV?.Dispose();
+            _datasetVByte?.Dispose();
+            _datasetV = null;
         }
 
         public void LoadDatasetInVideoMemory()
         {
-            int w = Width,
-                h = Height,
-                d = Depth;
+            int w = width,
+                h = height,
+                d = depth;
 
             short[] buffer = new short[w * h * d];
             var bands = Enumerable.Range(1, d).ToArray();
-            dataset.ReadRaster(0, 0, w, h, buffer, w, h, d, bands, 0, 0, 0);
-            dataset_v = GpuContext.Instance.Accelerator.Allocate<short>(w, h, d);
-            dataset_v.CopyFrom(buffer, 0, Index3.Zero, buffer.Length);
+            _dataset.ReadRaster(0, 0, w, h, buffer, w, h, d, bands, 0, 0, 0);
+            _datasetV = GpuContext.Instance.Accelerator.Allocate<short>(w, h, d);
+            _datasetV.CopyFrom(buffer, 0, Index3.Zero, buffer.Length);
         }
 
         public void RenderBand(ref WriteableBitmap bmp, int band)
         {
-            int w = Width, h = Height;
+            int w = width, h = height;
             // todo: MinMax should be calculated on GPU
-            double[] MinMax = new double[2];
-            dataset.GetRasterBand(band).ComputeRasterMinMax(MinMax, 0);
-            short min = (short)(MinMax[0]);
-            double mult = 255 / (MinMax[1] - MinMax[0]);
+            double[] minMax = new double[2];
+            _dataset.GetRasterBand(band).ComputeRasterMinMax(minMax, 0);
+            short min = (short)(minMax[0]);
+            double mult = 255 / (minMax[1] - minMax[0]);
 
-            uint[] data = CalculationWrappers.PicConvertion(w * h, dataset_v.View, band, mult, min);
+            uint[] data = CalculationWrappers.PictureConvertion(_datasetV.View, band, mult, min);
 
             using (var buf = bmp.Lock())
             {
@@ -88,10 +86,10 @@ namespace AvaloniaMVVM.DatasetWrapper
 
         public void RenderCorrelation(ref WriteableBitmap bmp)
         {
-            int w = Width, h = Height;
+            int w = width, h = height;
             var index = new Index2(w, h);
 
-            uint[] data = CalculationWrappers.GetCorrelationMap(index, dataset_v.View);
+            uint[] data = CalculationWrappers.GetCorrelationMap(index, _datasetV.View);
 
             using (var buf = bmp.Lock())
             {
@@ -102,10 +100,10 @@ namespace AvaloniaMVVM.DatasetWrapper
 
         public void RenderSobel(ref WriteableBitmap bmp)
         {
-            int w = Width, h = Height;
+            int w = width, h = height;
             var index = new Index2(w, h);
 
-            uint[] data = CalculationWrappers.GetSobelMap(index, dataset_v.View);
+            uint[] data = CalculationWrappers.GetSobelMap(index, _datasetV.View);
 
             using (var buf = bmp.Lock())
             {
@@ -117,12 +115,12 @@ namespace AvaloniaMVVM.DatasetWrapper
         public HistogramData RenderHistogram(ref WriteableBitmap bmp)
         {
             var histData = new HistogramData();
-            int w = Width, h = Height, d = Depth;
+            int w = width, h = height, d = depth;
             var index = new Index3(w, h, d);
 
             var histIndex = new Index2(1000, 1000);
 
-            var data = CalculationWrappers.GetHistogram(index, dataset_v.View, histIndex, histData);
+            var data = CalculationWrappers.GetHistogram(index, _datasetV.View, histIndex, histData);
             bmp = new WriteableBitmap(new Avalonia.PixelSize(histIndex.X, histIndex.Y), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888);
 
             using (var buf = bmp.Lock())
@@ -136,7 +134,7 @@ namespace AvaloniaMVVM.DatasetWrapper
         public BrightnessCalculationData GetBrightnessCalculationData(ref WriteableBitmap bmp)
         {
             var result = new BrightnessCalculationData();
-            result = CalculationWrappers.CalculateBrightnessStats(dataset_v.View, result);
+            result = CalculationWrappers.CalculateBrightnessStats(_datasetV.View, result);
 
             bmp = new WriteableBitmap(new PixelSize(result.imageSize.X, result.imageSize.Y), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888);
 
@@ -154,13 +152,13 @@ namespace AvaloniaMVVM.DatasetWrapper
             if (maxValue == 0)
                 return;
 
-            var d = dataset_v_byte;
+            var d = _datasetVByte;
             d?.Dispose();
-            dataset_v_byte = null;
+            _datasetVByte = null;
             uint[] data;
-            (dataset_v_byte, data) = CalculationWrappers.ConvertToByteRepresentation(dataset_v.View, maxValue);
+            (_datasetVByte, data) = CalculationWrappers.ConvertToByteRepresentation(_datasetV.View, maxValue);
 
-            bmp = new WriteableBitmap(new PixelSize(dataset_v_byte.Width, dataset_v_byte.Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888);
+            bmp = new WriteableBitmap(new PixelSize(_datasetVByte.Width, _datasetVByte.Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888);
 
             if (data != null)
             {
@@ -174,32 +172,20 @@ namespace AvaloniaMVVM.DatasetWrapper
 
         public void RenderPearsonCorrelation(ref WriteableBitmap bmp, byte lowThreshold = 0, byte highThreshold = 0)
         {
-            var data = CalculationWrappers.CalculatePearsonCorrelation(dataset_v_byte, lowThreshold, highThreshold);
+            var data = CalculationWrappers.CalculatePearsonCorrelation(_datasetVByte, lowThreshold, highThreshold);
 
-            using (var img = new WriteableBitmap(new PixelSize(dataset_v_byte.Width, dataset_v_byte.Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888))
+            using (var img = new WriteableBitmap(new PixelSize(_datasetVByte.Width, _datasetVByte.Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888))
             {
                 string time = DateTime.Now.ToFileTime().ToString();
-                //using (var buf = img.Lock())
-                //{
-                //    IntPtr ptr = buf.Address;
-                //    Marshal.Copy((int[])(object)data.xCorrelation, 0, ptr, data.xCorrelation.Length);
-                //}
-                //img.Save($"D://Temp/xCorrelation_{time}.png");
-                //using (var buf = img.Lock())
-                //{
-                //    IntPtr ptr = buf.Address;
-                //    Marshal.Copy((int[])(object)data.yCorrelation, 0, ptr, data.yCorrelation.Length);
-                //}
-                //img.Save($"D://Temp/yCorrelation_{time}.png");
                 using (var buf = img.Lock())
                 {
                     IntPtr ptr = buf.Address;
                     Marshal.Copy((int[])(object)data.xyCorrelation, 0, ptr, data.xyCorrelation.Length);
                 }
-                img.Save($"D://Temp/PearsonCorrelation_{dataset_v_byte.Depth}Bands_{(highThreshold == 0 ? "No" : highThreshold.ToString())}Threshold_{time}.png");
+                img.Save($"{Program.PathToTemp}/PearsonCorrelation_{_datasetVByte.Depth}Bands_{(highThreshold == 0 ? "No" : highThreshold.ToString())}Threshold_{time}.png");
 
-                OpenCvSharp.Mat mt = new OpenCvSharp.Mat(Height, Width, OpenCvSharp.MatType.CV_8U, data.rawPicture);
-                mt.SaveImage($"D://Temp/PearsonCorrelation_{dataset_v_byte.Depth}Bands_{(highThreshold == 0 ? "No" : highThreshold.ToString())}Threshold_{time}.bmp");
+                OpenCvSharp.Mat mt = new OpenCvSharp.Mat(height, width, OpenCvSharp.MatType.CV_8U, data.rawPicture);
+                mt.SaveImage($"{Program.PathToTemp}/PearsonCorrelation_{_datasetVByte.Depth}Bands_{(highThreshold == 0 ? "No" : highThreshold.ToString())}Threshold_{time}.bmp");
             }
 
             using (var buf = bmp.Lock())
@@ -213,7 +199,7 @@ namespace AvaloniaMVVM.DatasetWrapper
 
         public void RenderSignatureLengthDerivative(ref WriteableBitmap bmp, bool normalize, short maxValue, byte highThreshold = 0)
         {
-            var data = EdgeDetectionWrapper.CalculateSignatureLengthDerivative(dataset_v.View, normalize, maxValue, highThreshold);
+            var data = EdgeDetectionWrapper.CalculateSignatureLengthDerivative(_datasetV.View, normalize, maxValue, highThreshold);
 
             using (var buf = bmp.Lock())
             {
@@ -223,11 +209,11 @@ namespace AvaloniaMVVM.DatasetWrapper
 
 
 
-            using (var img = new WriteableBitmap(new PixelSize(Width, Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888))
+            using (var img = new WriteableBitmap(new PixelSize(width, height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888))
             {
                 string time = DateTime.Now.ToFileTime().ToString();
                 System.Text.StringBuilder sb = new System.Text.StringBuilder();
-                sb.Append($"SignatureLengthEdges_short_{Depth}Bands_Clamped");
+                sb.Append($"SignatureLengthEdges_short_{depth}Bands_Clamped");
                 if (normalize)
                     sb.Append("_normalized");
                 sb.Append($"_{time}.png");
@@ -237,16 +223,16 @@ namespace AvaloniaMVVM.DatasetWrapper
                     IntPtr ptr = buf.Address;
                     Marshal.Copy((int[])(object)data.xyPicture, 0, ptr, data.xyPicture.Length);
                 }
-                img.Save($"D://Temp/{sb.ToString()}");
+                img.Save($"{Program.PathToTemp}/{sb.ToString()}");
 
-                OpenCvSharp.Mat mt = new OpenCvSharp.Mat(Height, Width, OpenCvSharp.MatType.CV_8U, data.rawPicture);
-                mt.SaveImage($"D://Temp/{sb.ToString()}.bmp");
+                OpenCvSharp.Mat mt = new OpenCvSharp.Mat(height, width, OpenCvSharp.MatType.CV_8U, data.rawPicture);
+                mt.SaveImage($"{Program.PathToTemp}/{sb.ToString()}.bmp");
             }
         }
 
         public void RenderByteSignatureLengthDerivative(ref WriteableBitmap bmp, bool normalize)
         {
-            var data = EdgeDetectionWrapper.CalculateSignatureLengthDerivative(dataset_v_byte.View, normalize);
+            var data = EdgeDetectionWrapper.CalculateSignatureLengthDerivative(_datasetVByte.View, normalize);
 
             using (var buf = bmp.Lock())
             {
@@ -256,7 +242,7 @@ namespace AvaloniaMVVM.DatasetWrapper
 
 
 
-            using (var img = new WriteableBitmap(new PixelSize(Width, Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888))
+            using (var img = new WriteableBitmap(new PixelSize(width, height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888))
             {
                 string time = DateTime.Now.ToFileTime().ToString();
                 //using (var buf = img.Lock())
@@ -264,15 +250,15 @@ namespace AvaloniaMVVM.DatasetWrapper
                 //    IntPtr ptr = buf.Address;
                 //    Marshal.Copy((int[])(object)data.xPicture, 0, ptr, data.xPicture.Length);
                 //}
-                //img.Save($"D://Temp/xPicture_{time}.png");
+                //img.Save($"{Program.PathToTemp}/xPicture_{time}.png");
                 //using (var buf = img.Lock())
                 //{
                 //    IntPtr ptr = buf.Address;
                 //    Marshal.Copy((int[])(object)data.yPicture, 0, ptr, data.yPicture.Length);
                 //}
-                //img.Save($"D://Temp/yPicture_{time}.png");
+                //img.Save($"{Program.PathToTemp}/yPicture_{time}.png");
                 System.Text.StringBuilder sb = new System.Text.StringBuilder();
-                sb.Append($"SignatureLengthEdges_byte_{Depth}Bands");
+                sb.Append($"SignatureLengthEdges_byte_{depth}Bands");
                 if (normalize)
                     sb.Append("_normalized");
                 sb.Append($"_{time}.png");
@@ -282,16 +268,16 @@ namespace AvaloniaMVVM.DatasetWrapper
                     IntPtr ptr = buf.Address;
                     Marshal.Copy((int[])(object)data.xyPicture, 0, ptr, data.xyPicture.Length);
                 }
-                img.Save($"D://Temp/{sb.ToString()}");
+                img.Save($"{Program.PathToTemp}/{sb.ToString()}");
 
-                OpenCvSharp.Mat mt = new OpenCvSharp.Mat(Height, Width, OpenCvSharp.MatType.CV_8U, data.rawPicture);
-                mt.SaveImage($"D://Temp/{sb.ToString()}.bmp");
+                OpenCvSharp.Mat mt = new OpenCvSharp.Mat(height, width, OpenCvSharp.MatType.CV_8U, data.rawPicture);
+                mt.SaveImage($"{Program.PathToTemp}/{sb.ToString()}.bmp");
             }
         }
 
         public void AccumulateEdges(ref WriteableBitmap bmp, byte[] cannyData, byte pearsonThreshold, short maxValue)
         {
-            uint[] data = EdgeDetectionWrapper.AccumulateEdges(dataset_v, dataset_v_byte, cannyData, pearsonThreshold, maxValue);
+            uint[] data = EdgeDetectionWrapper.AccumulateEdges(_datasetV, _datasetVByte, cannyData, pearsonThreshold, maxValue);
 
             using (var buf = bmp.Lock())
             {
@@ -306,19 +292,19 @@ namespace AvaloniaMVVM.DatasetWrapper
             var greenBand = 17 - 1;
             var blueBand = 38 - 1;
 
-            double[] MinMax = new double[2];
-            dataset.GetRasterBand(redBand).ComputeRasterMinMax(MinMax, 0);
-            short redMax = (short)(MinMax[1]);
-            dataset.GetRasterBand(greenBand).ComputeRasterMinMax(MinMax, 0);
-            short greenMax = (short)(MinMax[1]);
-            dataset.GetRasterBand(blueBand).ComputeRasterMinMax(MinMax, 0);
-            short blueMax = (short)(MinMax[1]);
+            double[] minMax = new double[2];
+            _dataset.GetRasterBand(redBand).ComputeRasterMinMax(minMax, 0);
+            short redMax = (short)(minMax[1]);
+            _dataset.GetRasterBand(greenBand).ComputeRasterMinMax(minMax, 0);
+            short greenMax = (short)(minMax[1]);
+            _dataset.GetRasterBand(blueBand).ComputeRasterMinMax(minMax, 0);
+            short blueMax = (short)(minMax[1]);
             if (max == -1)
                 max = XMath.Max(blueMax, Math.Max(redMax, greenMax));
 
-            uint[] data = CalculationWrappers.CalculatePseudoColor(dataset_v.View, redBand, greenBand, blueBand, max);
+            uint[] data = CalculationWrappers.CalculatePseudoColor(_datasetV.View, redBand, greenBand, blueBand, max);
 
-            bmp = new WriteableBitmap(new PixelSize(Width, Height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888);
+            bmp = new WriteableBitmap(new PixelSize(width, height), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888);
 
             using (var buf = bmp.Lock())
             {
@@ -329,9 +315,9 @@ namespace AvaloniaMVVM.DatasetWrapper
 
         public void RenderScanline(ref WriteableBitmap bmp, int band, int row, int column)
         {
-            var data = CalculationWrappers.CalcScanlineImage(dataset_v.View, band, row, column);
+            var data = CalculationWrappers.CalcScanlineImage(_datasetV.View, band, row, column);
 
-            bmp = new WriteableBitmap(new Avalonia.PixelSize(Width + Depth, Height + Depth), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888);
+            bmp = new WriteableBitmap(new Avalonia.PixelSize(width + depth, height + depth), new Vector(1, 1), Avalonia.Platform.PixelFormat.Rgba8888);
 
             using (var buf = bmp.Lock())
             {

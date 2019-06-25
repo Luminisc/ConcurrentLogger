@@ -8,6 +8,6 @@ namespace AvaloniaMVVM
 {
     public static class Consts
     {
-        public static readonly string relativePathToRoot = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), @"../../../");
+        public static readonly string RelativePathToRoot = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), @"../../../");
     }
 }
