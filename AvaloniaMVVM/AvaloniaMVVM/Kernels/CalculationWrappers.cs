@@ -2,9 +2,7 @@
 using ILGPU;
 using ILGPU.Runtime;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace AvaloniaMVVM.Kernels
 {
@@ -18,7 +16,7 @@ namespace AvaloniaMVVM.Kernels
 
         public static uint[] PictureConvertion(ArrayView3D<short> imageView, int band, double mult, short min)
         {
-            uint[] result = null;
+            uint[] result;
             using (var bufOut = GpuContext.Instance.Accelerator.Allocate<uint>(imageView.Width * imageView.Height))
             {
                 PiсConvertKernel(bufOut.Length, bufOut.View, imageView.GetSliceView(band - 1).AsLinearView(), mult, min);
@@ -31,7 +29,7 @@ namespace AvaloniaMVVM.Kernels
 
         public static uint[] PictureConvertion(ArrayView3D<byte> imageView, int band, double mult, short min)
         {
-            uint[] result = null;
+            uint[] result;
             using (var bufOut = GpuContext.Instance.Accelerator.Allocate<uint>(imageView.Width * imageView.Height))
             {
                 PiсConvertFromByteKernel(bufOut.Length, bufOut.View, imageView.GetSliceView(band - 1).AsLinearView(), mult, min);
@@ -54,7 +52,7 @@ namespace AvaloniaMVVM.Kernels
             var buildCorrelationMapKernel = GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index2, ArrayView2D<double>, ArrayView2D<double>, ArrayView2D<double>, ArrayView2D<double>, ArrayView2D<double>>(Kernels.BuildCorrelationMap);
             var correlationMapToRgbaKernel = GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index2, ArrayView2D<uint>, ArrayView2D<double>>(Kernels.CorrelationMapToRgba32);
 
-            uint[] result = null;
+            uint[] result;
 
             using (var bufHor = GpuContext.Instance.Accelerator.Allocate<double>(index))
             using (var bufVer = GpuContext.Instance.Accelerator.Allocate<double>(index))
@@ -94,7 +92,7 @@ namespace AvaloniaMVVM.Kernels
             var accumulateSobelKernel = GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index3, ArrayView3D<short>, ArrayView3D<short>, ArrayView3D<short>>(Kernels.AccumulateSobelMap);
             var calculateSobelKernel = GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index2, ArrayView2D<short>, ArrayView3D<short>>(Kernels.CalculateSobel);
 
-            uint[] result = null;
+            uint[] result;
 
             using (var bufHor = GpuContext.Instance.Accelerator.Allocate<short>(imageView.Extent))
             using (var bufVer = GpuContext.Instance.Accelerator.Allocate<short>(imageView.Extent))
@@ -127,7 +125,7 @@ namespace AvaloniaMVVM.Kernels
             var histogramKernel = GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index3, ArrayView<int>, ArrayView3D<short>>(HistogramKernels.CalculateHistogram);
             var histogramImageKernel = GpuContext.Instance.Accelerator.LoadAutoGroupedStreamKernel<Index, ArrayView2D<short>, ArrayView<int>, double, double, int>(HistogramKernels.CalculateHistogramImage);
 
-            uint[] result = null;
+            uint[] result;
             int[] buf1;
 
             using (var bufHist = GpuContext.Instance.Accelerator.Allocate<int>(short.MaxValue))
@@ -195,7 +193,7 @@ namespace AvaloniaMVVM.Kernels
                     output.arrImage = imageBuf.GetAsArray();
                     output.arrMeanBrightness = meanBrightnessBuf.GetAsArray();
                     output.arrMaxBrightness = maxBrightnessBuf.GetAsArray();
-                    output.arrStandartDeviation = deviationBuf.GetAsArray();
+                    output.arrStandardDeviation = deviationBuf.GetAsArray();
                 }
             }
 
@@ -299,7 +297,7 @@ namespace AvaloniaMVVM.Kernels
 
         public static uint[] CalculatePseudoColor(ArrayView3D<short> imageView, int redBand, int greenBand, int blueBand, short max)
         {
-            uint[] result = null;
+            uint[] result;
             var sliceIndex = imageView.GetSliceView(0).Extent;
             using (var imageBuf = GpuContext.Instance.Accelerator.Allocate<uint>(sliceIndex))
             {
@@ -320,7 +318,7 @@ namespace AvaloniaMVVM.Kernels
 
         public static uint[] CalcScanlineImage(ArrayView3D<short> imageView, int band, int row, int column)
         {
-            uint[] data = null;
+            uint[] data;
 
             Index2 index = new Index2(imageView.Extent.X + imageView.Extent.Z, imageView.Extent.Y + imageView.Extent.Z);
             var slice = imageView.GetSliceView(0).Extent;
@@ -486,7 +484,7 @@ namespace AvaloniaMVVM.Kernels
 
         public static uint[] AccumulateEdges(ArrayView3D<short> imageShortView, ArrayView3D<byte> imageByteView, byte[] cannyData, byte pearsonThreshold, short maxValue)
         {
-            uint[] result = null;
+            uint[] result;
 
             var pearsonData = CalculationWrappers.CalculatePearsonCorrelation(imageByteView, 0, pearsonThreshold).rawPicture;
             var signLengthByte = CalculateSignatureLengthDerivative(imageByteView, true).rawPicture;

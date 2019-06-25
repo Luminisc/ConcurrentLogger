@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace AvaloniaMVVM.Kernels
+﻿namespace AvaloniaMVVM.Kernels
 {
     public class ColorConsts
     {

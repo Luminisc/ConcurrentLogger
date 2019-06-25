@@ -1,7 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using Avalonia.Threading;
 using AvaloniaMVVM.ViewModels;
 
 namespace AvaloniaMVVM.Views
@@ -21,8 +20,8 @@ namespace AvaloniaMVVM.Views
             _img = this.FindControl<Image>("ImageCtrl");
 
 
-            this.Closing += MainWindow_Closing;
-            this.Opened += MainWindow_Opened;
+            Closing += MainWindow_Closing;
+            Opened += MainWindow_Opened;
         }
 
         private void MainWindow_Opened(object sender, System.EventArgs e)

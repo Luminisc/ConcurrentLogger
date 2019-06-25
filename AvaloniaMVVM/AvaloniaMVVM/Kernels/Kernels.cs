@@ -1,7 +1,4 @@
 ﻿using ILGPU;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace AvaloniaMVVM.Kernels
 {

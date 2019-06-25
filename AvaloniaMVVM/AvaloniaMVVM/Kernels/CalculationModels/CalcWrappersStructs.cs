@@ -1,7 +1,4 @@
 ﻿using ILGPU;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace AvaloniaMVVM.Kernels
 {
@@ -10,7 +7,7 @@ namespace AvaloniaMVVM.Kernels
         public int[] arrImage;
         public double[] arrMeanBrightness;
         public short[] arrMaxBrightness;
-        public double[] arrStandartDeviation;
+        public double[] arrStandardDeviation;
         public Index2 imageSize;
     }
 

@@ -68,7 +68,6 @@ namespace AvaloniaMVVM.DatasetWrapper
 
         public void RenderBand(ref WriteableBitmap bmp, int band)
         {
-            int w = width, h = height;
             // todo: MinMax should be calculated on GPU
             double[] minMax = new double[2];
             _dataset.GetRasterBand(band).ComputeRasterMinMax(minMax, 0);
@@ -223,10 +222,10 @@ namespace AvaloniaMVVM.DatasetWrapper
                     IntPtr ptr = buf.Address;
                     Marshal.Copy((int[])(object)data.xyPicture, 0, ptr, data.xyPicture.Length);
                 }
-                img.Save($"{Program.PathToTemp}/{sb.ToString()}");
+                img.Save($"{Program.PathToTemp}/{sb}");
 
                 OpenCvSharp.Mat mt = new OpenCvSharp.Mat(height, width, OpenCvSharp.MatType.CV_8U, data.rawPicture);
-                mt.SaveImage($"{Program.PathToTemp}/{sb.ToString()}.bmp");
+                mt.SaveImage($"{Program.PathToTemp}/{sb}.bmp");
             }
         }
 
@@ -268,10 +267,10 @@ namespace AvaloniaMVVM.DatasetWrapper
                     IntPtr ptr = buf.Address;
                     Marshal.Copy((int[])(object)data.xyPicture, 0, ptr, data.xyPicture.Length);
                 }
-                img.Save($"{Program.PathToTemp}/{sb.ToString()}");
+                img.Save($"{Program.PathToTemp}/{sb}");
 
                 OpenCvSharp.Mat mt = new OpenCvSharp.Mat(height, width, OpenCvSharp.MatType.CV_8U, data.rawPicture);
-                mt.SaveImage($"{Program.PathToTemp}/{sb.ToString()}.bmp");
+                mt.SaveImage($"{Program.PathToTemp}/{sb}.bmp");
             }
         }
 

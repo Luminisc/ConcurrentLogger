@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using ReactiveUI;
-using AvaloniaMVVM.DatasetWrapper;
-using Avalonia.Input;
 using System.Linq;
 using AvaloniaMVVM.Etc;
 using System.Runtime.InteropServices;
@@ -14,12 +11,6 @@ namespace AvaloniaMVVM.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase, IDisposable
     {
-
-        public MainWindowViewModel()
-        {
-
-        }
-
         private string _description;
         public string Description
         {

@@ -1,7 +1,6 @@
 ﻿using AvaloniaMVVM.Kernels;
 using System.IO;
 using System;
-using System.Collections.Generic;
 using System.Text;
 
 namespace AvaloniaMVVM.Etc
@@ -25,7 +24,7 @@ namespace AvaloniaMVVM.Etc
             sb.AppendLine($"Channel;Mean value;Max value; Deviation value");
             for (int i = 0; i < data.arrMeanBrightness.Length; i++)
             {
-                sb.AppendLine($"{i + 1};{data.arrMeanBrightness[i]};{data.arrMaxBrightness[i]};{data.arrStandartDeviation[i]}");
+                sb.AppendLine($"{i + 1};{data.arrMeanBrightness[i]};{data.arrMaxBrightness[i]};{data.arrStandardDeviation[i]}");
             }
             File.WriteAllText($"{Program.PathToTemp}/brightnessData_{depth}Bands_{DateTime.Now.ToFileTime().ToString()}.csv", sb.ToString());
         }

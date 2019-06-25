@@ -2,10 +2,7 @@
 using ILGPU.Runtime;
 using ILGPU.Runtime.CPU;
 using ILGPU.Runtime.Cuda;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace AvaloniaMVVM.Gpu
 {
@@ -33,8 +30,6 @@ namespace AvaloniaMVVM.Gpu
     public class Singleton<T> where T : new()
     {
         private static T _instance;
-
-        public Singleton() { }
 
         public static T Instance
         {

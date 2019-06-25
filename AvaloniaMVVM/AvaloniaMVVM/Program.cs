@@ -3,17 +3,9 @@ using Avalonia;
 using Avalonia.Logging.Serilog;
 using AvaloniaMVVM.ViewModels;
 using AvaloniaMVVM.Views;
-using System.Runtime.InteropServices;
 using OSGeo.GDAL;
-using System.Linq;
 using System.IO;
 using System.Reflection;
-using Avalonia.Media.Imaging;
-using System.Diagnostics;
-using ILGPU;
-using ILGPU.Runtime.Cuda;
-using ILGPU.Runtime;
-using ILGPU.Runtime.CPU;
 using Directory = System.IO.Directory;
 
 namespace AvaloniaMVVM
