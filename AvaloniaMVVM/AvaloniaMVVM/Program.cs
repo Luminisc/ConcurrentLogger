@@ -29,6 +29,7 @@ namespace AvaloniaMVVM
 
             BuildAvaloniaApp()
                 .Start<MainWindow>(GetModel);
+            Console.WriteLine("Exitting...");
         }
 
         public static AppBuilder BuildAvaloniaApp()
